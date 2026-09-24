@@ -1,19 +1,24 @@
-import { type ReactNode, useMemo, useRef, useState } from 'react';
-import { useTriggerPantryTestAlert } from '@workspace/api-client-react';
+import { useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
-  ChevronLeft,
-  FileImage,
-  Info,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
+  Droplets,
+  Milk,
+  Minus,
+  Package,
+  Plus,
   ReceiptText,
+  RotateCcw,
   ShieldCheck,
-  Smartphone,
+  ShoppingBag,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 
 type Frequency = 'less' | 'standard' | 'more';
-type Stage = 'onboarding' | 'cadence' | 'sms' | 'active';
-
 type PantryItem = {
   id: string;
   name: string;
@@ -21,11 +26,8 @@ type PantryItem = {
   daysToRunOut: number;
   frequency: Frequency;
 };
-
-type Alert = {
-  message: string;
-  deliveryMode: 'simulated';
-};
+type OrderLine = { id: string; name: string; quantity: number };
+type SimulatedOrder = { id: number; placedAt: Date; lines: OrderLine[] };
 
 const initialItems: PantryItem[] = [
   { id: 'kids-body-wash', name: 'Kids Body Wash', baseDays: 14, daysToRunOut: 14, frequency: 'standard' },
@@ -34,481 +36,317 @@ const initialItems: PantryItem[] = [
   { id: 'hand-soap-refill', name: 'Hand Soap Refill', baseDays: 30, daysToRunOut: 30, frequency: 'standard' },
 ];
 
-const frequencyOptions: { value: Frequency; label: string; description: string }[] = [
-  { value: 'less', label: 'Less Frequent', description: 'Stretch the interval' },
-  { value: 'standard', label: 'Standard', description: 'Keep the estimate' },
-  { value: 'more', label: 'More Frequent', description: 'Restock sooner' },
+const householdOptions = ['2 Adults, 2 Kids under 10', '1 Adult, 1 Kid', '2 Adults', 'Other household'];
+const frequencies: { value: Frequency; label: string }[] = [
+  { value: 'less', label: 'Less Frequent' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'more', label: 'More Frequent' },
 ];
 
-const householdOptions = [
-  { value: '2 Adults, 2 Kids under 10', label: '2 Adults, 2 Kids under 10' },
-  { value: '1 Adult, 1 Kid', label: '1 Adult, 1 Kid' },
-  { value: '2 Adults', label: '2 Adults' },
-  { value: 'Other household', label: 'Other household' },
-];
-const isPlausiblePhone = (value: string) => {
-  const digits = value.replace(/\D/g, '');
-  return digits.length >= 10 && digits.length <= 15 && !/^(\d)\1+$/.test(digits);
-};
-function runOutDate(days: number) {
+function dateIn(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
 }
 
-function Logo() {
+function Brand() {
   return (
-    <div className="flex items-center gap-3" data-testid="brand-smart-pantry">
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-[13px] bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] shadow-[0_5px_0_hsl(var(--foreground)/0.1)]">
-        <div className="absolute top-[9px] h-1.5 w-4 rounded-full border-2 border-[hsl(var(--foreground))]" />
-        <div className="h-5 w-4 rounded-b-[6px] rounded-t-[3px] border-2 border-[hsl(var(--foreground))]" />
-      </div>
-      <div>
-        <p className="font-serif text-[19px] font-semibold leading-none tracking-[-0.02em]">SmartPantry</p>
-        <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-[hsl(var(--muted-foreground))]">restock, quietly</p>
-      </div>
+    <div className="brand" data-testid="brand-smart-pantry">
+      <span className="brand-mark"><Package size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+      <span className="brand-name">SmartPantry</span>
     </div>
   );
 }
 
-function ProgressRail({ stage }: { stage: Stage }) {
-  const stages: { id: Stage; label: string; number: string }[] = [
-    { id: 'onboarding', label: 'Your pantry', number: '01' },
-    { id: 'cadence', label: 'Your rhythm', number: '02' },
-    { id: 'sms', label: 'Your nudge', number: '03' },
-  ];
-  const currentIndex = stage === 'active' ? 3 : stages.findIndex((item) => item.id === stage);
-
+function ItemIcon({ id }: { id: string }) {
+  const icon = id === 'whole-milk'
+    ? <Milk size={23} strokeWidth={1.7} />
+    : id === 'dishwasher-pods'
+      ? <Package size={23} strokeWidth={1.7} />
+      : <Droplets size={23} strokeWidth={1.7} />;
   return (
-    <aside className="hidden min-h-[100dvh] w-[266px] shrink-0 flex-col justify-between bg-[hsl(var(--sidebar))] px-7 py-8 text-[hsl(var(--sidebar-foreground))] md:flex">
-      <div>
-        <Logo />
-        <div className="mt-24">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--sidebar-foreground)/0.5)]">A little less to remember</p>
-          <h1 className="mt-4 max-w-[180px] font-serif text-[31px] leading-[1.08] tracking-[-0.04em]">The right things, at the right time.</h1>
-          <p className="mt-5 max-w-[185px] text-[13px] leading-5 text-[hsl(var(--sidebar-foreground)/0.65)]">A quiet rhythm for the things your household reaches for every week.</p>
-        </div>
-        <div className="mt-14 space-y-4">
-          {stages.map((item, index) => {
-            const completed = currentIndex > index;
-            const current = stage === item.id;
-            return (
-              <div className="flex items-center gap-3" key={item.id}>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-medium transition-colors ${completed ? 'border-[hsl(var(--sidebar-primary))] bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))]' : current ? 'border-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary))]' : 'border-[hsl(var(--sidebar-foreground)/0.28)] text-[hsl(var(--sidebar-foreground)/0.45)]'}`}>
-                  {completed ? <Check size={13} strokeWidth={2.5} /> : item.number}
-                </div>
-                <span className={`text-[12px] ${current ? 'font-medium text-[hsl(var(--sidebar-foreground))]' : 'text-[hsl(var(--sidebar-foreground)/0.5)]'}`}>{item.label}</span>
-              </div>
-            );
-          })}
-          {stage === 'active' && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[hsl(var(--sidebar-primary))] text-[hsl(var(--sidebar-primary-foreground))]"><Check size={13} strokeWidth={2.5} /></div>
-              <span className="text-[12px] font-medium">All set</span>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="border-t border-[hsl(var(--sidebar-border))] pt-5">
-        <div className="flex items-start gap-2.5 text-[hsl(var(--sidebar-foreground)/0.55)]">
-          <ShieldCheck size={16} className="mt-0.5 shrink-0" />
-          <p className="text-[11px] leading-4">Private by design.<br />Your setup stays in this session.</p>
-        </div>
-      </div>
-    </aside>
+    <span className={`item-symbol ${id === 'whole-milk' ? 'bg-[hsl(34_73%_88%)]' : id === 'dishwasher-pods' ? 'bg-[hsl(343_27%_89%)]' : 'bg-[hsl(38_77%_83%)]'}`} aria-hidden="true">
+      {icon}
+    </span>
   );
 }
 
-function MobileHeader({ stage }: { stage: Stage }) {
-  const label = stage === 'active' ? 'All set' : stage === 'onboarding' ? 'Step 01 of 03' : stage === 'cadence' ? 'Step 02 of 03' : 'Step 03 of 03';
+function OrderHistory({ orders }: { orders: SimulatedOrder[] }) {
   return (
-    <header className="flex items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--card)/0.7)] px-5 py-4 md:hidden">
-      <Logo />
-      <span className="font-mono text-[10px] uppercase tracking-[0.13em] text-[hsl(var(--muted-foreground))]" data-testid="text-mobile-step">{label}</span>
-    </header>
-  );
-}
-
-function Button({
-  children,
-  variant = 'primary',
-  onClick,
-  disabled = false,
-  testId,
-  type = 'button',
-}: {
-  children: ReactNode;
-  variant?: 'primary' | 'quiet' | 'outline';
-  onClick?: () => void;
-  disabled?: boolean;
-  testId: string;
-  type?: 'button' | 'submit';
-}) {
-  const styles = {
-     primary: 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-[0_5px_0_hsl(var(--foreground)/0.12)] hover:-translate-y-0.5 hover:shadow-[0_7px_0_hsl(var(--foreground)/0.12)]',
-    quiet: 'bg-transparent text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]',
-    outline: 'border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--muted)/0.55)]',
-  };
-  return (
-    <button type={type} onClick={onClick} disabled={disabled} data-testid={testId} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] px-5 text-center text-[13px] font-semibold transition-[transform,opacity,background-color,border-color,box-shadow] duration-200 disabled:cursor-not-allowed disabled:opacity-45 ${styles[variant]}`}>
-      {children}
-    </button>
-  );
-}
-
-function PageIntro({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
-  return (
-    <div className="animate-rise-in">
-      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[hsl(var(--muted-foreground))]">{eyebrow}</p>
-      <h2 className="mt-4 max-w-[620px] font-serif text-[clamp(36px,5.2vw,62px)] leading-[.98] tracking-[-0.055em] text-[hsl(var(--foreground))]">{title}</h2>
-      <p className="mt-5 max-w-[510px] text-[15px] leading-6 text-[hsl(var(--muted-foreground))]">{children}</p>
-    </div>
-  );
-}
-
-function Onboarding({
-  receiptName,
-  setReceiptName,
-  household,
-  setHousehold,
-  onContinue,
-}: {
-  receiptName: string;
-  setReceiptName: (name: string) => void;
-  household: string;
-  setHousehold: (value: string) => void;
-  onContinue: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const chooseReceipt = (file?: File) => {
-    if (!file) return;
-    if (['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-      setReceiptName(file.name);
-      onContinue();
-    }
-  };
-
-  return (
-    <div className="mx-auto w-full max-w-[760px]">
-      <PageIntro eyebrow="A lighter way to keep stocked" title="The little things, taken care of.">
-        Set up your smart pantry in under 2 minutes.
-      </PageIntro>
-      <div className="mt-7 rounded-[22px] bg-[hsl(var(--accent))] px-5 py-5 shadow-[0_9px_0_hsl(var(--foreground)/0.06)] animate-rise-in stagger-1 sm:px-7 sm:py-7">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--card)/0.65)]"><ReceiptText size={20} /></div>
-          <div>
-            <p className="font-serif text-[23px] leading-tight tracking-[-0.03em] sm:text-[28px]">Start with a ready-made pantry.</p>
-            <p className="mt-1.5 text-[13px] leading-5 opacity-80">Four everyday staples, ready for you to adjust.</p>
-          </div>
+    <section className="mt-10" aria-labelledby="history-heading">
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow">This session only</p>
+          <h3 id="history-heading" className="section-title mt-2">Order history</h3>
         </div>
-        <Button onClick={onContinue} testId="button-review-cadence">
-          Use Demo Receipt Data <ArrowRight size={17} />
-        </Button>
+        <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]" data-testid="text-order-count">{orders.length} simulated</span>
       </div>
-      <fieldset className="mt-8 animate-rise-in stagger-2">
-        <legend className="text-[13px] font-semibold">Who’s at home?</legend>
-        <p className="mt-1 text-[12px] text-[hsl(var(--muted-foreground))]">Your starting household size</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {householdOptions.map((option) => (
-            <button key={option.value} type="button" aria-pressed={household === option.value} data-testid={`button-household-${option.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} onClick={() => setHousehold(option.value)} className={`min-h-11 rounded-full border px-4 text-[12px] font-semibold transition-colors ${household === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))]'}`}>{option.label}</button>
-          ))}
+      {orders.length === 0 ? (
+        <div className="panel flex items-center gap-4 p-5 text-[13px] text-[hsl(var(--muted-foreground))]" data-testid="status-no-orders">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[hsl(var(--muted))]"><ReceiptText size={20} aria-hidden="true" /></span>
+          Your simulated orders will appear here after you place one.
         </div>
-      </fieldset>
-      <div className="mt-9 animate-rise-in stagger-3">
-        <div className="mb-3 flex items-center gap-3"><span className="h-px flex-1 bg-[hsl(var(--border))]" /><span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--muted-foreground))]">Or add your own screenshot</span><span className="h-px flex-1 bg-[hsl(var(--border))]" /></div>
-        <div
-          role="button"
-          tabIndex={0}
-          data-testid="dropzone-receipt"
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inputRef.current?.click(); } }}
-          onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }}
-          onDragOver={(event) => event.preventDefault()}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(event) => { event.preventDefault(); setIsDragging(false); chooseReceipt(event.dataTransfer.files?.[0]); }}
-          aria-label="Choose an Amazon or grocery screenshot"
-          className={`group relative flex min-h-[144px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[20px] border border-dashed px-5 text-center transition-colors duration-200 ${isDragging ? 'border-[hsl(var(--primary))] bg-[hsl(var(--accent)/0.25)]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card)/0.62)] hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--card))]'}`}
-        >
-          <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" data-testid="input-receipt" onChange={(event) => chooseReceipt(event.target.files?.[0])} />
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[12px] bg-[hsl(var(--accent))] text-[hsl(var(--foreground))] transition-transform duration-300 group-hover:-translate-y-1">
-            {receiptName ? <Check size={25} strokeWidth={2.2} /> : <FileImage size={25} strokeWidth={1.7} />}
-          </div>
-          <p className="text-[13px] font-semibold" data-testid="text-receipt-state">{receiptName ? receiptName : 'Choose an Amazon or grocery screenshot'}</p>
-          <p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">Tap to choose or drop a PNG, JPG or WEBP</p>
-        </div>
-        <div className="mt-3 flex items-start gap-2 rounded-[12px] bg-[hsl(var(--muted)/0.65)] px-3.5 py-3 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">
-          <Info size={15} className="mt-0.5 shrink-0 text-[hsl(var(--primary)/0.75)]" />
-          <span><strong className="font-semibold text-[hsl(var(--foreground))]">No image reading or OCR.</strong> Uploading moves you to the same demo estimates. Your image stays local to your browser and is not sent anywhere.</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CadenceReview({
-  items,
-  household,
-  onChange,
-  onBack,
-  onContinue,
-}: {
-  items: PantryItem[];
-  household: string;
-  onChange: (id: string, frequency: Frequency) => void;
-  onBack: () => void;
-  onContinue: () => void;
-}) {
-  return (
-    <div className="mx-auto w-full max-w-[820px]">
-      <PageIntro eyebrow="Step 02 · make it yours" title="Find your household rhythm.">
-        Starting estimates for {household.toLowerCase()}. Tap a pace to see when each item may run out.
-      </PageIntro>
-      <div className="mt-8 overflow-hidden rounded-[22px] border border-[hsl(var(--border))] bg-[hsl(var(--card)/0.72)] shadow-[0_12px_30px_-20px_hsl(var(--foreground)/0.2)] animate-rise-in stagger-1">
-        <div className="divide-y divide-[hsl(var(--border))]">
-          {items.map((item, index) => (
-            <div className="px-4 py-5 sm:px-6" key={item.id} data-testid={`row-pantry-item-${item.id}`}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[13px] font-semibold ${index % 3 === 0 ? 'bg-[hsl(var(--accent)/0.7)]' : index % 3 === 1 ? 'bg-[hsl(21_67%_77%/0.4)]' : 'bg-[hsl(25_54%_82%/0.5)]'}`}>{item.name.slice(0, 1)}</div>
-                  <p className="text-[14px] font-semibold">{item.name}</p>
-                </div>
-                <div className="shrink-0 text-right" aria-live="polite" data-testid={`text-runout-${item.id}`}>
-                  <p className="text-[13px] font-bold">{item.daysToRunOut} days</p>
-                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">Est. {runOutDate(item.daysToRunOut)}</p>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-1.5" role="group" aria-label={`Cadence for ${item.name}`}>
-                {frequencyOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={item.frequency === option.value}
-                    data-testid={`button-frequency-${item.id}-${option.value}`}
-                    onClick={() => onChange(item.id, option.value)}
-                    className={`min-h-12 rounded-[10px] border px-1 text-[11px] font-semibold leading-tight transition-colors duration-200 ${item.frequency === option.value ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))] bg-transparent text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'}`}
-                    title={option.description}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="mt-4 flex items-center gap-2 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]"><Info size={14} className="shrink-0" /> Estimates are based on demo data, not a scanned receipt.</div>
-      <div className="mt-7 flex flex-wrap items-center justify-between gap-2 animate-rise-in stagger-2">
-        <Button variant="quiet" onClick={onBack} testId="button-back-onboarding"><ChevronLeft size={16} /> Back</Button>
-        <Button onClick={onContinue} testId="button-set-up-alerts">Set up alerts <ArrowRight size={16} /></Button>
-      </div>
-    </div>
-  );
-}
-
-function PhonePreview({ message, phoneNumber }: { message?: string; phoneNumber: string }) {
-  return (
-    <div className="relative mx-auto w-full max-w-[295px] rounded-[34px] border-[7px] border-[hsl(var(--foreground))] bg-[hsl(var(--background))] p-2 shadow-[0_20px_35px_-20px_hsl(var(--foreground)/0.45)]">
-      <div className="absolute left-1/2 top-0 z-10 h-5 w-28 -translate-x-1/2 rounded-b-[13px] bg-[hsl(var(--foreground))]" />
-      <div className="min-h-[330px] overflow-hidden rounded-[25px] bg-[hsl(var(--background))]">
-        <div className="border-b border-[hsl(var(--border))] px-4 pb-3 pt-8 text-center">
-          <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-[10px] font-semibold">SP</div>
-          <p className="mt-1.5 text-[11px] font-semibold">SmartPantry</p>
-        </div>
-        <div className="flex min-h-[258px] flex-col justify-end gap-2 px-3 pb-4">
-          <p className="mb-1 text-center font-mono text-[8px] uppercase tracking-[0.13em] text-[hsl(var(--muted-foreground))]">{message ? 'Just now' : 'Your preview'}</p>
-          {message ? (
-            <div className="max-w-[225px] whitespace-pre-wrap break-words rounded-[17px] rounded-bl-[5px] bg-[hsl(var(--accent)/0.58)] px-3.5 py-3 text-[11px] leading-5 text-[hsl(var(--foreground))]" data-testid="text-alert-message">{message}</div>
-          ) : (
-            <div className="rounded-[17px] rounded-bl-[5px] border border-dashed border-[hsl(var(--border))] px-3.5 py-3 text-[11px] leading-4 text-[hsl(var(--muted-foreground))]" data-testid="text-alert-placeholder">Your SmartPantry message will appear here after you send a test.</div>
-          )}
-          <p className="px-2 text-[9px] text-[hsl(var(--muted-foreground))]">{phoneNumber || 'Your phone number'}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SmsSetup({
-  alertsEnabled,
-  setAlertsEnabled,
-  phoneNumber,
-  setPhoneNumber,
-  onBack,
-  onActivate,
-}: {
-  alertsEnabled: boolean;
-  setAlertsEnabled: (enabled: boolean) => void;
-  phoneNumber: string;
-  setPhoneNumber: (phone: string) => void;
-  onBack: () => void;
-  onActivate: () => void;
-}) {
-  const canActivate = !alertsEnabled || isPlausiblePhone(phoneNumber);
-  return (
-    <div className="mx-auto w-full max-w-[820px]">
-      <PageIntro eyebrow="Step 03 · choose your nudge" title="A gentle heads-up, when it matters.">
-        Choose whether to set up text alerts. This demo won’t actually send texts or place Amazon orders.
-      </PageIntro>
-      <div className="mt-9 grid gap-7 lg:grid-cols-[1fr_300px] lg:items-start">
-        <div className="animate-rise-in stagger-1">
-          <div className="rounded-[20px] border border-[hsl(var(--border))] bg-[hsl(var(--card)/0.7)] p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[hsl(var(--accent)/0.75)] sm:flex"><Smartphone size={18} /></div>
+      ) : (
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <div key={order.id} className="history-card" data-testid={`card-order-${order.id}`}>
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p id="alerts-toggle-label" className="text-[13px] font-semibold leading-5">Enable 1-Tap Auto-Reorder Alerts via SMS</p>
-                  <p className="mt-1 text-[11px] leading-4 text-[hsl(var(--muted-foreground))]">Optional. You can still explore without a number.</p>
+                  <p className="text-[13px] font-bold">Simulated order {String(order.id).padStart(2, '0')}</p>
+                  <p className="mt-1 text-[12px] leading-5 text-[hsl(var(--muted-foreground))]">{order.lines.map((line) => `${line.quantity} × ${line.name}`).join(' · ')}</p>
                 </div>
+                <span className="shrink-0 font-mono text-[10px] text-[hsl(var(--muted-foreground))]">{new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(order.placedAt)}</span>
               </div>
-              <button type="button" role="switch" aria-labelledby="alerts-toggle-label" aria-checked={alertsEnabled} data-testid="toggle-alerts" onClick={() => setAlertsEnabled(!alertsEnabled)} className={`relative flex h-11 w-14 shrink-0 items-center rounded-full transition-colors duration-200 ${alertsEnabled ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--border))]'}`}>
-                <span className={`absolute left-1 h-6 w-6 rounded-full bg-[hsl(var(--card))] shadow-sm transition-transform duration-200 ${alertsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-              </button>
             </div>
-            {alertsEnabled && (
-              <div className="mt-5 border-t border-[hsl(var(--border))] pt-5 animate-rise-in">
-                <label htmlFor="phone-number" className="text-[12px] font-semibold">Phone number for alerts</label>
-                <div className="mt-2 flex items-center rounded-[12px] border border-[hsl(var(--input))] bg-[hsl(var(--background)/0.55)] px-3 transition-colors focus-within:border-[hsl(var(--primary))]">
-                  <input id="phone-number" type="tel" inputMode="tel" autoComplete="tel" aria-describedby="phone-hint" aria-invalid={phoneNumber.length > 0 && !isPlausiblePhone(phoneNumber)} value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} placeholder="(415) 555-0184" data-testid="input-phone-number" className="h-12 min-w-0 flex-1 bg-transparent px-2 text-[14px] outline-none placeholder:text-[hsl(var(--muted-foreground)/0.6)]" />
-                </div>
-                <p id="phone-hint" className="mt-2 text-[11px] leading-4 text-[hsl(var(--muted-foreground))]" data-testid="text-phone-required">{phoneNumber && !isPlausiblePhone(phoneNumber) ? 'Enter a valid phone number (10–15 digits).' : 'Enter 10–15 digits to activate with alerts on.'}</p>
-                <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={14} className="mt-0.5 shrink-0" /> Saved only in this browser session. No real SMS will be sent.</p>
-              </div>
-            )}
-          </div>
-          <p className="mt-5 text-[12px] leading-5 text-[hsl(var(--muted-foreground))]">Activation starts an on-screen simulation only. Your test alert is available on the next screen, even with alerts off.</p>
+          ))}
         </div>
-        <div className="hidden animate-rise-in stagger-2 lg:block"><PhonePreview phoneNumber={phoneNumber} /></div>
-      </div>
-      <div className="mt-9 flex flex-wrap items-center justify-between gap-2 animate-rise-in stagger-3">
-        <Button variant="quiet" onClick={onBack} testId="button-back-cadence"><ChevronLeft size={16} /> Back</Button>
-        <Button onClick={onActivate} disabled={!canActivate} testId="button-activate">Activate Smart Pantry <Check size={16} /></Button>
-      </div>
-    </div>
-  );
-}
-
-function ActiveSimulation({
-  items,
-  household,
-  phoneNumber,
-  alertsEnabled,
-  alert,
-  onTest,
-  isTesting,
-  testError,
-}: {
-  items: PantryItem[];
-  household: string;
-  phoneNumber: string;
-  alertsEnabled: boolean;
-  alert?: Alert;
-  onTest: () => void;
-  isTesting: boolean;
-  testError?: string;
-}) {
-  const dueSoon = useMemo(() => items.filter((item) => item.daysToRunOut <= 7), [items]);
-  return (
-    <div className="mx-auto w-full max-w-[860px]">
-      <div className="animate-rise-in">
-        <div className="flex h-12 w-12 items-center justify-center rounded-[15px] bg-[hsl(var(--accent))] text-[hsl(var(--foreground))]"><Check size={24} strokeWidth={2.3} /></div>
-        <p className="mt-7 font-mono text-[10px] uppercase tracking-[0.22em] text-[hsl(var(--muted-foreground))]">Your demo pantry is active</p>
-        <h2 className="mt-4 max-w-[600px] font-serif text-[clamp(36px,5.2vw,62px)] leading-[.98] tracking-[-0.055em]">The pantry has a plan now.</h2>
-        <p className="mt-5 max-w-[500px] text-[15px] leading-6 text-[hsl(var(--muted-foreground))]">Your {items.length} staples are ready to explore. This is a simulation: no monitoring, real SMS, or Amazon order happens.</p>
-      </div>
-      <div className="mt-8 rounded-[22px] border border-[hsl(var(--border))] bg-[hsl(var(--accent)/0.45)] p-5 animate-rise-in stagger-1 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-serif text-[23px] leading-tight tracking-[-0.03em]">See a restock nudge.</p>
-            <p className="mt-1 text-[12px] leading-5 text-[hsl(var(--muted-foreground))]">Creates an on-screen preview, even if you switched alerts off.</p>
-          </div>
-          <Button onClick={onTest} disabled={isTesting} testId="button-test-alert-active">{isTesting ? 'Preparing alert…' : 'Trigger Test SMS Alert Now'} <ArrowRight size={16} /></Button>
-        </div>
-        {isTesting && <div role="status" className="mt-5 space-y-2" data-testid="status-alert-loading"><div className="skeleton h-4 w-3/4 rounded bg-[hsl(var(--card)/0.7)]" /><div className="skeleton h-4 w-1/2 rounded bg-[hsl(var(--card)/0.7)]" /><span className="sr-only">Preparing simulated alert</span></div>}
-        {testError && <p role="alert" className="mt-4 text-[12px] font-medium text-[hsl(var(--destructive))]" data-testid="text-active-alert-error">{testError} Use the button above to retry.</p>}
-        {alert && <div className="mt-5 border-t border-[hsl(var(--foreground)/0.13)] pt-5" aria-live="polite"><PhonePreview message={alert.message} phoneNumber={phoneNumber} /><p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.1em] text-[hsl(var(--muted-foreground))]" data-testid="text-delivery-mode">Delivery mode · {alert.deliveryMode}</p><p className="sr-only" data-testid="text-active-alert">{alert.message}</p></div>}
-      </div>
-      <div className="mt-10 grid gap-5 lg:grid-cols-[1fr_300px]">
-        <div className="animate-rise-in stagger-1 rounded-[20px] border border-[hsl(var(--border))] bg-[hsl(var(--card)/0.72)] p-5">
-          <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-4">
-            <div><p className="text-[13px] font-semibold">Your restock rhythm</p><p className="mt-1 text-[11px] text-[hsl(var(--muted-foreground))]">{household} · {items.length} items</p></div>
-            <ReceiptText size={18} className="text-[hsl(var(--muted-foreground))]" />
-          </div>
-          <div className="mt-1 divide-y divide-[hsl(var(--border))]">
-            {items.map((item) => (
-              <div className="flex items-center justify-between gap-3 py-3" key={item.id} data-testid={`active-item-${item.id}`}>
-                <span className="text-[12px] font-medium">{item.name}</span>
-                <span className="shrink-0 text-right font-mono text-[10px] text-[hsl(var(--muted-foreground))]">{item.daysToRunOut}d · Est. {runOutDate(item.daysToRunOut)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="animate-rise-in stagger-2 rounded-[20px] bg-[hsl(var(--sidebar))] p-5 text-[hsl(var(--sidebar-foreground))]">
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] font-semibold">Next on your radar</p>
-            <span className="rounded-full bg-[hsl(var(--sidebar-primary)/0.18)] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] text-[hsl(var(--sidebar-primary))]">{dueSoon.length} soon</span>
-          </div>
-           <p className="mt-1 text-[11px] leading-4 text-[hsl(var(--sidebar-foreground)/0.6)]">Based on your demo estimates.</p>
-          <div className="mt-6 space-y-3">
-             {dueSoon.length === 0 && <p className="text-[12px] leading-5 text-[hsl(var(--sidebar-foreground)/0.7)]">Nothing due this week. A little breathing room.</p>}
-            {dueSoon.map((item) => (
-              <div className="flex items-center justify-between rounded-[11px] bg-[hsl(var(--sidebar-accent))] px-3 py-2.5" key={item.id}>
-                <span className="text-[11px]">{item.name}</span><span className="font-mono text-[10px] text-[hsl(var(--sidebar-primary))]">{item.daysToRunOut}d</span>
-              </div>
-            ))}
-          </div>
-           <p className="mt-6 border-t border-[hsl(var(--sidebar-border))] pt-4 text-[10px] leading-4 text-[hsl(var(--sidebar-foreground)/0.7)]">{alertsEnabled ? `Alert preference on · ${phoneNumber} (demo only)` : 'Alert preference off · test preview still available.'}</p>
-        </div>
-      </div>
-    </div>
+      )}
+    </section>
   );
 }
 
 export default function Home() {
-  const [stage, setStage] = useState<Stage>('onboarding');
-  const [receiptName, setReceiptName] = useState('');
-  const [household, setHousehold] = useState(householdOptions[0].value);
+  const [active, setActive] = useState(false);
+  const [household, setHousehold] = useState(householdOptions[0]);
+  const [source, setSource] = useState('Demo receipt');
+  const [uploadError, setUploadError] = useState('');
   const [items, setItems] = useState<PantryItem[]>(initialItems);
-  const [alertsEnabled, setAlertsEnabled] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [alert, setAlert] = useState<Alert>();
-  const alertMutation = useTriggerPantryTestAlert();
-  const testError = alertMutation.isError ? 'The preview could not be prepared. Try again.' : undefined;
+  const [basket, setBasket] = useState<Record<string, number>>({});
+  const [orders, setOrders] = useState<SimulatedOrder[]>([]);
+  const [latestOrder, setLatestOrder] = useState<SimulatedOrder | null>(null);
+  const [cadenceOpen, setCadenceOpen] = useState(false);
+  const [basketError, setBasketError] = useState('');
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const basketRef = useRef<HTMLElement>(null);
 
-  const updateFrequency = (id: string, frequency: Frequency) => {
-    const cadenceFactor: Record<Frequency, number> = {
-      less: 1.25,
-      standard: 1,
-      more: 0.75,
-    };
+  const basketLines = items.filter((item) => (basket[item.id] ?? 0) > 0).map((item) => ({
+    id: item.id,
+    name: item.name,
+    quantity: basket[item.id],
+  }));
+  const totalUnits = basketLines.reduce((total, line) => total + line.quantity, 0);
+
+  function beginWithDemo() {
+    setSource('Demo receipt');
+    setActive(true);
+  }
+
+  function chooseImage(file?: File) {
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setUploadError('Choose a PNG, JPG, or WEBP image to continue.');
+      return;
+    }
+    setUploadError('');
+    // Only the filename is kept. The image is never read, parsed, or transmitted.
+    setSource(file.name);
+    setActive(true);
+  }
+
+  function changeQuantity(id: string, quantity: number) {
+    setBasketError('');
+    setBasket((current) => {
+      const next = { ...current };
+      if (quantity <= 0) delete next[id];
+      else next[id] = Math.min(99, quantity);
+      return next;
+    });
+  }
+
+  function updateFrequency(id: string, frequency: Frequency) {
+    const factor: Record<Frequency, number> = { less: 1.25, standard: 1, more: 0.75 };
     setItems((current) => current.map((item) => item.id === id
-      ? { ...item, frequency, daysToRunOut: Math.max(1, Math.round(item.baseDays * cadenceFactor[frequency])) }
+      ? { ...item, frequency, daysToRunOut: Math.max(1, Math.round(item.baseDays * factor[frequency])) }
       : item));
-  };
+  }
 
-  const triggerTestAlert = () => {
-    setAlert(undefined);
-    alertMutation.mutate(
-      { data: phoneNumber.trim() ? { phoneNumber: phoneNumber.trim() } : {} },
-      { onSuccess: (result) => setAlert({ message: result.message, deliveryMode: result.deliveryMode }) },
-    );
-  };
+  function placeOrder() {
+    if (basketLines.length === 0) {
+      setBasketError('Add at least one item before placing a simulated order.');
+      return;
+    }
+    const order: SimulatedOrder = { id: orders.length + 1, placedAt: new Date(), lines: basketLines };
+    setOrders((current) => [order, ...current]);
+    setLatestOrder(order);
+    setBasket({});
+    setBasketError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   return (
-    <div className="pantry-noise min-h-[100dvh] bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
-      <div className="flex min-h-[100dvh]">
-        <ProgressRail stage={stage} />
-        <main className="min-w-0 flex-1">
-          <MobileHeader stage={stage} />
-          <div className="mx-auto w-full max-w-[1100px] px-5 py-8 sm:px-8 sm:py-12 lg:px-14 lg:py-16">
-            {stage === 'onboarding' && <Onboarding receiptName={receiptName} setReceiptName={setReceiptName} household={household} setHousehold={setHousehold} onContinue={() => setStage('cadence')} />}
-            {stage === 'cadence' && <CadenceReview items={items} household={household} onChange={updateFrequency} onBack={() => setStage('onboarding')} onContinue={() => setStage('sms')} />}
-            {stage === 'sms' && <SmsSetup alertsEnabled={alertsEnabled} setAlertsEnabled={setAlertsEnabled} phoneNumber={phoneNumber} setPhoneNumber={setPhoneNumber} onBack={() => setStage('cadence')} onActivate={() => setStage('active')} />}
-            {stage === 'active' && <ActiveSimulation items={items} household={household} phoneNumber={phoneNumber} alertsEnabled={alertsEnabled} alert={alert} onTest={triggerTestAlert} isTesting={alertMutation.isPending} testError={testError} />}
+    <div className="app-shell pantry-noise">
+      <header className="site-header">
+        <Brand />
+        <span className="header-tag">A calmer way to reorder · Demo only</span>
+        {active && <span className="rounded-full border border-[hsl(var(--border))] px-3 py-2 font-mono text-[10px] uppercase tracking-[.1em] text-[hsl(var(--muted-foreground))] md:hidden">Demo pantry</span>}
+      </header>
+
+      {!active ? (
+        <main className="page-wrap intro-grid">
+          <div className="animate-rise-in">
+            <p className="eyebrow">The everyday essentials, sorted</p>
+            <h1 className="display-title mt-5 max-w-[600px]">More of what<br />you need.</h1>
+            <p className="muted-copy mt-6 max-w-[450px] text-[16px]">Start with four everyday staples. Add what you need and try an in-app reorder in a few taps. No account or checkout.</p>
+            <button type="button" className="btn btn-primary mt-8 w-full sm:w-auto" onClick={beginWithDemo} data-testid="button-use-demo-receipt">
+              Use Demo Receipt Data <ArrowRight size={17} aria-hidden="true" />
+            </button>
+            <p className="mt-2 text-[11px] text-[hsl(var(--muted-foreground))]">Demo only. Nothing is purchased.</p>
+            <div className="mt-9">
+              <p className="mb-3 text-[13px] font-bold">Your household</p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Choose household size">
+                {householdOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    data-testid={`button-household-${option.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                    aria-pressed={household === option}
+                    onClick={() => setHousehold(option)}
+                    className={`min-h-11 rounded-full border px-4 text-[12px] font-semibold transition-colors ${household === option ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))]'}`}
+                  >{option}</button>
+                ))}
+              </div>
+            </div>
+            <div className="my-6 flex items-center gap-3 max-w-[450px]"><span className="h-px flex-1 bg-[hsl(var(--border))]" /><span className="eyebrow">or use a screenshot</span><span className="h-px flex-1 bg-[hsl(var(--border))]" /></div>
+            <input
+              ref={uploadRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              aria-label="Choose a receipt screenshot"
+              data-testid="input-receipt"
+              onChange={(event) => chooseImage(event.target.files?.[0])}
+            />
+            <button type="button" className="upload-target max-w-[450px]" onClick={() => uploadRef.current?.click()} data-testid="button-upload-receipt">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--accent)/.55)]"><Upload size={21} aria-hidden="true" /></span>
+              <span><strong className="block text-[13px]">Choose a screenshot</strong><span className="mt-1 block text-[11px] leading-4 text-[hsl(var(--muted-foreground))]">PNG, JPG or WEBP · Moves straight to the demo pantry</span></span>
+            </button>
+            {uploadError && <p role="alert" className="mt-2 text-[12px] text-[hsl(var(--destructive))]" data-testid="text-upload-error">{uploadError}</p>}
+            <p className="mt-4 flex max-w-[450px] items-start gap-2 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={15} className="mt-0.5 shrink-0" aria-hidden="true" />Your image stays on this device. It is not read, uploaded, or used to identify items. Both paths open the same four demo items.</p>
+          </div>
+          <div className="intro-art animate-rise-in stagger-1" aria-hidden="true">
+            <div className="art-sheet">
+              <div className="flex items-start justify-between"><span className="font-serif text-[24px] font-semibold tracking-[-.05em]">Household list</span><ReceiptText size={22} strokeWidth={1.5} /></div>
+              <p className="mt-1 font-mono text-[9px] uppercase tracking-[.18em] text-[hsl(var(--muted-foreground))]">The things that run out</p>
+              <div className="art-line" />
+              {initialItems.map((item, index) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 py-2.5 text-[13px]">
+                  <span><span className="mr-3 font-mono text-[10px] text-[hsl(var(--muted-foreground))]">0{index + 1}</span>{item.name}</span>
+                  <span className="h-4 w-4 rounded-full border border-[hsl(var(--border))]" />
+                </div>
+              ))}
+              <div className="art-line" />
+              <p className="font-serif text-[20px] italic text-[hsl(var(--muted-foreground))]">Ready when you are.</p>
+            </div>
+            <span className="absolute bottom-5 right-6 font-mono text-[9px] uppercase tracking-[.17em] text-[hsl(var(--sidebar-foreground)/.6)]">01 / pantry</span>
           </div>
         </main>
-      </div>
+      ) : latestOrder ? (
+        <main className="page-wrap max-w-[800px] py-12 pb-24 sm:py-20 animate-rise-in">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--accent))]"><Check size={27} aria-hidden="true" /></div>
+          <p className="eyebrow mt-8">Simulated order {String(latestOrder.id).padStart(2, '0')} · Complete</p>
+          <h1 className="display-title mt-4">That’s taken care of.<br /><span className="italic">For the demo.</span></h1>
+          <p className="muted-copy mt-5 max-w-[550px] text-[15px]">Your basket has been cleared and the order is saved for this session. Nothing was purchased, charged, or delivered.</p>
+          <section className="panel mt-9 overflow-hidden" aria-labelledby="confirmation-heading" data-testid="card-order-confirmation">
+            <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-5 sm:px-7"><ReceiptText size={20} aria-hidden="true" /><h2 id="confirmation-heading" className="text-[14px] font-bold">Order summary</h2></div>
+            <div className="divide-y divide-[hsl(var(--border))] px-5 sm:px-7">
+              {latestOrder.lines.map((line) => <div key={line.id} className="flex justify-between gap-4 py-4 text-[13px]" data-testid={`text-confirmed-item-${line.id}`}><span>{line.name}</span><strong className="font-mono">{line.quantity} ×</strong></div>)}
+            </div>
+            <div className="flex justify-between gap-4 border-t border-[hsl(var(--border))] bg-[hsl(var(--muted)/.4)] px-5 py-4 text-[12px] sm:px-7"><span>Items in this simulated order</span><strong data-testid="text-confirmed-count">{latestOrder.lines.reduce((sum, line) => sum + line.quantity, 0)}</strong></div>
+          </section>
+          <button type="button" className="btn btn-primary mt-7 w-full sm:w-auto" onClick={() => { setLatestOrder(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }} data-testid="button-order-again">
+            <RotateCcw size={17} aria-hidden="true" /> Order again
+          </button>
+          <OrderHistory orders={orders} />
+        </main>
+      ) : (
+        <main className="page-wrap pantry-layout">
+          <div className="min-w-0 animate-rise-in">
+            <p className="eyebrow">Your active demo pantry</p>
+            <h1 className="display-title mt-4">What do you<br /><span className="italic">need more of?</span></h1>
+            <p className="muted-copy mt-5 max-w-[550px] text-[14px]">Choose your everyday essentials, adjust the quantities, and place a simulated order. No real checkout happens here.</p>
+            <div className="mt-7 flex flex-wrap items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
+              <span className="rounded-full bg-[hsl(var(--muted))] px-3 py-2 font-semibold text-[hsl(var(--foreground))]" data-testid="text-household">{household}</span>
+              <span className="rounded-full border border-[hsl(var(--border))] px-3 py-2">Source: {source}</span>
+            </div>
+            <div className="mt-10 flex items-end justify-between gap-3">
+              <div><p className="eyebrow">The essentials</p><h2 className="section-title mt-2">Your four staples</h2></div>
+              <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]">04 items</span>
+            </div>
+            <div className="panel mt-5 overflow-hidden">
+              {items.map((item) => {
+                const quantity = basket[item.id] ?? 0;
+                return (
+                  <div key={item.id} className="item-row" data-testid={`active-item-${item.id}`}>
+                    <ItemIcon id={item.id} />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-[14px] font-bold leading-5">{item.name}</h3>
+                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))]" data-testid={`text-runout-${item.id}`}><Clock3 size={12} aria-hidden="true" /> Est. {item.daysToRunOut} days · {dateIn(item.daysToRunOut)}</p>
+                    </div>
+                    <div className="item-action shrink-0">
+                      {quantity === 0 ? (
+                        <button type="button" className="btn btn-light" onClick={() => changeQuantity(item.id, 1)} data-testid={`button-add-${item.id}`} aria-label={`Add ${item.name} to basket`}><Plus size={16} aria-hidden="true" /> Add</button>
+                      ) : (
+                        <div className="stepper" role="group" aria-label={`Quantity for ${item.name}`}>
+                          <button type="button" onClick={() => changeQuantity(item.id, quantity - 1)} aria-label={`Decrease ${item.name} quantity${quantity === 1 ? ' and remove from basket' : ''}`} data-testid={`button-decrease-${item.id}`}><Minus size={16} aria-hidden="true" /></button>
+                          <output aria-live="polite" aria-label={`${item.name} quantity`} data-testid={`text-quantity-${item.id}`}>{quantity}</output>
+                          <button type="button" onClick={() => changeQuantity(item.id, quantity + 1)} disabled={quantity >= 99} aria-label={`Increase ${item.name} quantity`} data-testid={`button-increase-${item.id}`}><Plus size={16} aria-hidden="true" /></button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Dates are estimates from demo data, not a scanned receipt or live stock levels.</p>
+          </div>
+
+          <aside className="basket-panel animate-rise-in stagger-1" ref={basketRef} aria-labelledby="basket-heading" data-testid="panel-basket">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-[hsl(var(--sidebar-primary))]">Ready when you are</p><h2 id="basket-heading" className="mt-2 font-serif text-[30px] tracking-[-.05em]">Your basket</h2></div>
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[hsl(var(--sidebar-accent))]"><ShoppingBag size={20} aria-hidden="true" /></span>
+            </div>
+            {basketLines.length === 0 ? (
+              <div className="mt-7 rounded-2xl border border-dashed border-[hsl(var(--sidebar-border))] px-5 py-8 text-center" data-testid="status-empty-basket">
+                <ShoppingBag size={24} className="mx-auto text-[hsl(var(--sidebar-primary))]" aria-hidden="true" />
+                <p className="mt-3 text-[13px] font-semibold">Nothing in your basket yet.</p>
+                <p className="mt-1 text-[11px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]">Tap Add beside anything you’d like to reorder.</p>
+              </div>
+            ) : (
+              <div className="mt-5" aria-live="polite">
+                {basketLines.map((line) => <div key={line.id} className="basket-line" data-testid={`basket-item-${line.id}`}>
+                  <div className="min-w-0"><p className="text-[12px] font-semibold">{line.name}</p><p className="mt-1 font-mono text-[10px] text-[hsl(var(--sidebar-foreground)/.65)]">Quantity {line.quantity}</p></div>
+                  <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[hsl(var(--sidebar-foreground)/.7)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]" onClick={() => changeQuantity(line.id, 0)} aria-label={`Remove ${line.name} from basket`} data-testid={`button-remove-${line.id}`}><Trash2 size={16} aria-hidden="true" /></button>
+                </div>)}
+                <div className="flex justify-between py-5 text-[12px]"><span className="text-[hsl(var(--sidebar-foreground)/.7)]">Total items</span><strong className="font-mono" data-testid="text-basket-count">{totalUnits}</strong></div>
+              </div>
+            )}
+            <button type="button" className="btn btn-accent mt-5 w-full" onClick={placeOrder} disabled={basketLines.length === 0} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
+            {basketError && <p role="alert" className="mt-3 text-[11px] text-[hsl(var(--sidebar-primary))]" data-testid="text-basket-error">{basketError}</p>}
+            <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]"><ShieldCheck size={14} className="mt-0.5 shrink-0" aria-hidden="true" />No payment, purchase, or delivery. This is a session-only prototype.</p>
+          </aside>
+          <div className="col-span-full max-w-[805px]">
+            <section className="panel overflow-hidden" aria-labelledby="cadence-heading">
+              <button type="button" className="flex min-h-[72px] w-full items-center justify-between gap-4 px-5 text-left sm:px-6" aria-expanded={cadenceOpen} aria-controls="cadence-content" onClick={() => setCadenceOpen(!cadenceOpen)} data-testid="button-toggle-cadence">
+                <span><strong id="cadence-heading" className="block text-[13px]">Adjust usage estimates</strong><span className="mt-1 block text-[11px] text-[hsl(var(--muted-foreground))]">Optional · change how soon an item may run out</span></span>
+                {cadenceOpen ? <ChevronUp size={19} aria-hidden="true" /> : <ChevronDown size={19} aria-hidden="true" />}
+              </button>
+              {cadenceOpen && <div id="cadence-content" className="divide-y divide-[hsl(var(--border))] border-t border-[hsl(var(--border))] px-5 sm:px-6">
+                {items.map((item) => <div key={item.id} className="py-4">
+                  <div className="flex items-center justify-between gap-2 text-[12px]"><strong>{item.name}</strong><span className="font-mono text-[10px] text-[hsl(var(--muted-foreground))]">{item.daysToRunOut} days</span></div>
+                  <div className="cadence-options" role="group" aria-label={`Usage frequency for ${item.name}`}>
+                    {frequencies.map((option) => <button key={option.value} type="button" aria-pressed={item.frequency === option.value} onClick={() => updateFrequency(item.id, option.value)} data-testid={`button-frequency-${item.id}-${option.value}`}>{option.label}</button>)}
+                  </div>
+                </div>)}
+              </div>}
+            </section>
+            <OrderHistory orders={orders} />
+          </div>
+          {totalUnits > 0 && <div className="mobile-basket-bar" aria-label="Basket shortcut">
+            <span className="text-[12px] font-semibold"><span className="block font-mono text-[10px] text-[hsl(var(--muted-foreground))]">YOUR BASKET</span>{totalUnits} {totalUnits === 1 ? 'item' : 'items'} ready</span>
+            <button type="button" className="btn btn-primary" onClick={() => basketRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} data-testid="button-view-basket">View basket <ArrowRight size={16} aria-hidden="true" /></button>
+          </div>}
+        </main>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # SmartPantry
 
-A lightweight prototype for testing household replenishment predictions and simulated SMS reorder alerts.
+A lightweight prototype for exploring in-app household replenishment and simulated reorders.
 
 ## Run & Operate
 
@@ -23,22 +23,22 @@ A lightweight prototype for testing household replenishment predictions and simu
 ## Where things live
 
 - `artifacts/smart-pantry` — React frontend and in-memory setup flow
-- `artifacts/api-server/src/routes/smart-pantry.ts` — simulated alert endpoint
-- `lib/api-spec/openapi.yaml` — API contract
+- `lib/api-spec/openapi.yaml` — shared health-check contract
 
 ## Architecture decisions
 
 - Receipt screenshots remain browser-local and are not uploaded.
 - The app intentionally has no authentication or persistent database state.
-- SMS delivery is simulated on screen; the endpoint never sends a real message.
+- Reorders are simulated locally; no purchase, payment, or vendor fulfillment takes place.
 
 ## Product
 
-Users can choose a household profile, upload a receipt screenshot or use demo receipt data, adjust replenishment cadence, configure alert preferences, activate the pantry, and trigger a simulated SMS alert.
+Users can choose a household profile, upload a receipt screenshot or use demo receipt data, adjust replenishment cadence, select items and quantities, and place simulated in-app reorders.
 
 ## User preferences
 
 - Keep SmartPantry sleek, exceptionally easy to use, and low-friction: make the demo path one tap, keep optional choices secondary, and prioritize touch-friendly mobile interactions.
+- Do not add restock reminders or SMS setup; reordering more items should happen directly in the app.
 
 ## Gotchas
 

@@ -17,20 +17,3 @@ export const HealthCheckResponse = zod.object({
 })
 
 
-/**
- * Returns an on-screen demo message without sending an SMS.
- * @summary Generate a simulated SmartPantry SMS alert
- */
-
-
-
-export const TriggerPantryTestAlertBody = zod.object({
-  "phoneNumber": zod.string().min(1).optional()
-})
-
-export const TriggerPantryTestAlertResponse = zod.object({
-  "message": zod.string(),
-  "deliveryMode": zod.enum(['simulated'])
-})
-
-

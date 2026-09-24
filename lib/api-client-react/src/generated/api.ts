@@ -6,28 +6,21 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
-  MutationFunction,
   QueryFunction,
   QueryKey,
-  UseMutationOptions,
-  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
-  ApiError,
-  HealthStatus,
-  PantryTestAlert,
-  PantryTestAlertInput
+  HealthStatus
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType , BodyType } from '../custom-fetch';
+import type { ErrorType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -130,93 +123,4 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
-
-export const getTriggerPantryTestAlertUrl = () => {
-
-
-
-
-  return `/api/smart-pantry/test-alert`
-}
-
-/**
- * Returns an on-screen demo message without sending an SMS.
- * @summary Generate a simulated SmartPantry SMS alert
- */
-export const triggerPantryTestAlert = async (pantryTestAlertInput: PantryTestAlertInput, options?: Parameters<typeof customFetch>[1]): Promise<PantryTestAlert> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<PantryTestAlert>(getTriggerPantryTestAlertUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(pantryTestAlertInput)
-  }
-);}
-
-
-
-
-
-export const getTriggerPantryTestAlertMutationKey = () => ['triggerPantryTestAlert'] as const;
-
-export const getTriggerPantryTestAlertMutationOptions = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof triggerPantryTestAlert>>, TError,TriggerPantryTestAlertMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof triggerPantryTestAlert>>, TError,TriggerPantryTestAlertMutationVariables, TContext> => {
-
-const mutationKey = getTriggerPantryTestAlertMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof triggerPantryTestAlert>>, TriggerPantryTestAlertMutationVariables> = (props) => {
-          const {data} = props ?? {};
-
-          return  triggerPantryTestAlert(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type TriggerPantryTestAlertMutationResult = NonNullable<Awaited<ReturnType<typeof triggerPantryTestAlert>>>
-    export type TriggerPantryTestAlertMutationBody = BodyType<PantryTestAlertInput>
-    export type TriggerPantryTestAlertMutationError = ErrorType<ApiError>
-    export type TriggerPantryTestAlertMutationVariables = {data: BodyType<PantryTestAlertInput>}
-
-    /**
- * @summary Generate a simulated SmartPantry SMS alert
- */
-export const useTriggerPantryTestAlert = <TError = ErrorType<ApiError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof triggerPantryTestAlert>>, TError,TriggerPantryTestAlertMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof triggerPantryTestAlert>>,
-        TError,
-        TriggerPantryTestAlertMutationVariables,
-        TContext
-      > => {
-      return useMutation(getTriggerPantryTestAlertMutationOptions(options));
-    }
 
