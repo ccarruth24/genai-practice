@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SmartPantry"
+description = "A mobile-friendly household replenishment prototype for busy parents. Upload a receipt or use demo items, adjust predicted run-out dates, set SMS alert preferences, and trigger an on-screen simulated reorder alert."
+version = "1.0.0"
+id = "artifacts/smart-pantry"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19933
+
+[services.development]
+run = "pnpm --filter @workspace/smart-pantry run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-pantry", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-pantry/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19933"
+BASE_PATH = "/"

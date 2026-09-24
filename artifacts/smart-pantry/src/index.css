@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 42 43% 95%;
+  --foreground: 157 24% 18%;
+  --border: 38 25% 84%;
+  --card: 42 50% 98%;
+  --card-foreground: 157 24% 18%;
+  --card-border: 39 27% 86%;
+  --sidebar: 160 25% 24%;
+  --sidebar-foreground: 42 44% 96%;
+  --sidebar-border: 160 19% 31%;
+  --sidebar-primary: 47 87% 68%;
+  --sidebar-primary-foreground: 157 24% 18%;
+  --sidebar-accent: 160 20% 30%;
+  --sidebar-accent-foreground: 42 44% 96%;
+  --sidebar-ring: 47 87% 68%;
+  --popover: 42 50% 98%;
+  --popover-foreground: 157 24% 18%;
+  --popover-border: 39 27% 86%;
+  --primary: 160 25% 24%;
+  --primary-foreground: 42 44% 96%;
+  --secondary: 38 32% 89%;
+  --secondary-foreground: 157 24% 18%;
+  --muted: 40 29% 91%;
+  --muted-foreground: 158 10% 43%;
+  --accent: 47 87% 68%;
+  --accent-foreground: 157 24% 18%;
+  --destructive: 3 61% 51%;
+  --destructive-foreground: 42 44% 96%;
+  --input: 38 25% 80%;
+  --ring: 160 25% 24%;
+  --radius: 0.9rem;
+  --app-font-sans: 'DM Sans', sans-serif;
+  --app-font-serif: 'Fraunces', serif;
+  --app-font-mono: 'DM Mono', monospace;
+}
+
+.dark {
+  --background: 157 24% 13%;
+  --foreground: 42 44% 96%;
+  --border: 160 19% 31%;
+  --card: 157 22% 18%;
+  --card-foreground: 42 44% 96%;
+  --card-border: 160 19% 31%;
+  --sidebar: 157 24% 10%;
+  --sidebar-foreground: 42 44% 96%;
+  --sidebar-border: 160 19% 25%;
+  --sidebar-primary: 47 87% 68%;
+  --sidebar-primary-foreground: 157 24% 18%;
+  --sidebar-accent: 160 20% 23%;
+  --sidebar-accent-foreground: 42 44% 96%;
+  --sidebar-ring: 47 87% 68%;
+  --popover: 157 22% 18%;
+  --popover-foreground: 42 44% 96%;
+  --popover-border: 160 19% 31%;
+  --primary: 47 87% 68%;
+  --primary-foreground: 157 24% 18%;
+  --secondary: 160 20% 23%;
+  --secondary-foreground: 42 44% 96%;
+  --muted: 160 20% 23%;
+  --muted-foreground: 39 22% 72%;
+  --accent: 47 87% 68%;
+  --accent-foreground: 157 24% 18%;
+  --destructive: 3 61% 58%;
+  --destructive-foreground: 42 44% 96%;
+  --input: 160 19% 36%;
+  --ring: 47 87% 68%;
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    margin: 0;
+    min-width: 320px;
+  }
+  button, input { font: inherit; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes soft-pulse {
+  0%, 100% { opacity: .7; }
+  50% { opacity: 1; }
+}
+.animate-rise-in { animation: rise-in .5s cubic-bezier(.22, 1, .36, 1) both; }
+.stagger-1 { animation-delay: 80ms; }
+.stagger-2 { animation-delay: 160ms; }
+.stagger-3 { animation-delay: 240ms; }
+.stagger-4 { animation-delay: 320ms; }
+.skeleton { animation: soft-pulse 1.3s ease-in-out infinite; }
+
+.pantry-noise::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .035;
+  z-index: 20;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+}

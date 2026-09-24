@@ -1,0 +1,31 @@
+Build a web app in Node.js/Express with a React frontend (using Tailwind CSS for styling) designed to test automated household item replenishment for busy parents. Keep the UI ultra-simple, modern, and mobile-friendly.
+
+### Core Features & UI Flow:
+1. Step 1: Onboarding & Receipt Upload
+   - Display a clean setup card: "Set up your smart pantry in under 2 minutes."
+   - Prompt user to select household size (Default pre-selected: "2 Adults, 2 Kids under 10").
+   - Include a file upload dropzone ("Upload Amazon or Grocery Receipt Screenshot") with a button to "Use Demo Receipt Data" so testing can be completed in seconds without actual files.
+
+2. Step 2: Predictive Cadence Review
+   - Upon upload (or clicking demo data), display an interactive table/card list of 4 key detected items:
+     * Kids Body Wash (Predicted: 14 days)
+     * Dishwasher Pods (Predicted: 21 days)
+     * Whole Milk (Predicted: 4 days)
+     * Hand Soap Refill (Predicted: 30 days)
+   - Next to each item, provide a simple 3-point radio/slider: "Less Frequent", "Standard", "More Frequent" that dynamically updates the run-out date display.
+
+3. Step 3: 1-Tap Automation Setup
+   - Request phone number for SMS reorder alerts.
+   - Include a big primary toggle: "Enable 1-Tap Auto-Reorder Alerts via SMS".
+   - Submit button: "Activate Smart Pantry".
+
+4. Step 4: Instant Value Simulation Screen
+   - On submission, display a confirmation screen simulating an active system.
+   - Include a "Trigger Test SMS Alert Now" button.
+   - When clicked, render a simulated iPhone SMS message component on screen (and optionally send a real test SMS via Twilio if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables are present, fallback gracefully to on-screen mockup if not).
+   - Mockup Text: "SmartPantry: Your Kids Body Wash will run out in 3 days. Reply YES to auto-order via Amazon."
+
+### Technical Guidelines:
+- Use clear component states (Step 1, Step 2, Step 3, Dashboard/Simulation).
+- Do not add login/authentication, database persistent storage, or real payment integrations. Use simple in-memory session/state to keep it lightweight.
+- Ensure the layout is responsive and touch-friendly for mobile browsers.

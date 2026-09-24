@@ -1,6 +1,6 @@
-# [Project name]
+# SmartPantry
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A lightweight prototype for testing household replenishment predictions and simulated SMS reorder alerts.
 
 ## Run & Operate
 
@@ -9,7 +9,7 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- No application-specific environment variables are required.
 
 ## Stack
 
@@ -22,15 +22,19 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/smart-pantry` — React frontend and in-memory setup flow
+- `artifacts/api-server/src/routes/smart-pantry.ts` — simulated alert endpoint
+- `lib/api-spec/openapi.yaml` — API contract
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Receipt screenshots remain browser-local and are not uploaded.
+- The app intentionally has no authentication or persistent database state.
+- SMS delivery is simulated on screen; the endpoint never sends a real message.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users can choose a household profile, upload a receipt screenshot or use demo receipt data, adjust replenishment cadence, configure alert preferences, activate the pantry, and trigger a simulated SMS alert.
 
 ## User preferences
 

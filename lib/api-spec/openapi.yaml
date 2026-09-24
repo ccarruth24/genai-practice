@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: smart-pantry
+    description: SmartPantry demo operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /smart-pantry/test-alert:
+    post:
+      operationId: triggerPantryTestAlert
+      tags: [smart-pantry]
+      summary: Generate a simulated SmartPantry SMS alert
+      description: Returns an on-screen demo message without sending an SMS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PantryTestAlertInput"
+      responses:
+        "200":
+          description: Simulated SMS alert message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PantryTestAlert"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +60,30 @@ components:
           type: string
       required:
         - status
+    PantryTestAlertInput:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          minLength: 1
+      required:
+        - phoneNumber
+    PantryTestAlert:
+      type: object
+      properties:
+        message:
+          type: string
+        deliveryMode:
+          type: string
+          enum: [simulated]
+      required:
+        - message
+        - deliveryMode
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
 

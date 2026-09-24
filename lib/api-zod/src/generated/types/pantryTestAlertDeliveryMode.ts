@@ -5,14 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface PantryTestAlertInput {
-  /** @minLength 1 */
-  phoneNumber: string;
-}
 
 export type PantryTestAlertDeliveryMode = typeof PantryTestAlertDeliveryMode[keyof typeof PantryTestAlertDeliveryMode];
 
@@ -20,13 +12,3 @@ export type PantryTestAlertDeliveryMode = typeof PantryTestAlertDeliveryMode[key
 export const PantryTestAlertDeliveryMode = {
   simulated: 'simulated',
 } as const;
-
-export interface PantryTestAlert {
-  message: string;
-  deliveryMode: PantryTestAlertDeliveryMode;
-}
-
-export interface ApiError {
-  error: string;
-}
-
