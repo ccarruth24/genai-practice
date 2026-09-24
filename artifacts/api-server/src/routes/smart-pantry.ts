@@ -11,7 +11,7 @@ router.post("/smart-pantry/test-alert", (req, res): void => {
 
   if (!parsed.success) {
     req.log.warn({ errors: parsed.error.message }, "Invalid test alert request");
-    res.status(400).json({ error: "Enter a phone number to test the alert." });
+    res.status(400).json({ error: "Unable to prepare the test alert." });
     return;
   }
 

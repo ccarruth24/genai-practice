@@ -11,7 +11,7 @@ export interface HealthStatus {
 
 export interface PantryTestAlertInput {
   /** @minLength 1 */
-  phoneNumber: string;
+  phoneNumber?: string;
 }
 
 export type PantryTestAlertDeliveryMode = typeof PantryTestAlertDeliveryMode[keyof typeof PantryTestAlertDeliveryMode];

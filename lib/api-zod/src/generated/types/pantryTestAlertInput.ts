@@ -8,5 +8,5 @@
 
 export interface PantryTestAlertInput {
   /** @minLength 1 */
-  phoneNumber: string;
+  phoneNumber?: string;
 }

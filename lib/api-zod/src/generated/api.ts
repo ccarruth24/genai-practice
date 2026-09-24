@@ -25,7 +25,7 @@ export const HealthCheckResponse = zod.object({
 
 
 export const TriggerPantryTestAlertBody = zod.object({
-  "phoneNumber": zod.string().min(1)
+  "phoneNumber": zod.string().min(1).optional()
 })
 
 export const TriggerPantryTestAlertResponse = zod.object({

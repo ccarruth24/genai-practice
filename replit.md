@@ -38,7 +38,7 @@ Users can choose a household profile, upload a receipt screenshot or use demo re
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep SmartPantry sleek, exceptionally easy to use, and low-friction: make the demo path one tap, keep optional choices secondary, and prioritize touch-friendly mobile interactions.
 
 ## Gotchas
 
