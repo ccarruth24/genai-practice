@@ -109,6 +109,7 @@ export default function Home() {
   const [active, setActive] = useState(false);
   const [household, setHousehold] = useState(householdOptions[0]);
   const [source, setSource] = useState('Demo receipt');
+  const [imageSelected, setImageSelected] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [items, setItems] = useState<PantryItem[]>(initialItems);
   const [basket, setBasket] = useState<Record<string, number>>({});
@@ -128,6 +129,7 @@ export default function Home() {
 
   function beginWithDemo() {
     setSource('Demo receipt');
+    setImageSelected(false);
     setActive(true);
   }
 
@@ -138,8 +140,9 @@ export default function Home() {
       return;
     }
     setUploadError('');
-    // Only the filename is kept. The image is never read, parsed, or transmitted.
-    setSource(file.name);
+    // The image is never read, parsed, or transmitted.
+    setSource('demo sample data (uploaded file not read)');
+    setImageSelected(true);
     setActive(true);
   }
 
@@ -162,7 +165,7 @@ export default function Home() {
 
   function placeOrder() {
     if (basketLines.length === 0) {
-      setBasketError('Add at least one item before placing a simulated order.');
+      setBasketError('Add at least one item to your basket first.');
       return;
     }
     const order: SimulatedOrder = { id: orders.length + 1, placedAt: new Date(), lines: basketLines };
@@ -268,6 +271,7 @@ export default function Home() {
               <span className="rounded-full bg-[hsl(var(--muted))] px-3 py-2 font-semibold text-[hsl(var(--foreground))]" data-testid="text-household">{household}</span>
               <span className="rounded-full border border-[hsl(var(--border))] px-3 py-2">Source: {source}</span>
             </div>
+            {imageSelected && <p className="mt-3 text-[13px] leading-5 text-[hsl(var(--muted-foreground))]" data-testid="text-upload-demo-notice">This demo doesn't read uploaded images. These are sample items, not what's in your image.</p>}
             <div className="mt-10 flex items-end justify-between gap-3">
               <div><p className="eyebrow">The essentials</p><h2 className="section-title mt-2">Your four staples</h2></div>
               <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]">04 items</span>
@@ -320,7 +324,7 @@ export default function Home() {
                 <div className="flex justify-between py-5 text-[12px]"><span className="text-[hsl(var(--sidebar-foreground)/.7)]">Total items</span><strong className="font-mono" data-testid="text-basket-count">{totalUnits}</strong></div>
               </div>
             )}
-            <button type="button" className="btn btn-accent mt-5 w-full" onClick={placeOrder} disabled={basketLines.length === 0} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
+            <button type="button" className="btn btn-accent mt-5 w-full" onClick={placeOrder} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
             {basketError && <p role="alert" className="mt-3 text-[11px] text-[hsl(var(--sidebar-primary))]" data-testid="text-basket-error">{basketError}</p>}
             <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]"><ShieldCheck size={14} className="mt-0.5 shrink-0" aria-hidden="true" />No payment, purchase, or delivery. This is a session-only prototype.</p>
           </aside>
