@@ -1,0 +1,110 @@
+{
+ "compare_before": {
+  "2A2K": {
+   "kids-body-wash": "Est. 14 days \u00b7 Dec 3",
+   "dishwasher-pods": "Est. 21 days \u00b7 Dec 10",
+   "whole-milk": "Est. 4 days \u00b7 Nov 23",
+   "hand-soap-refill": "Est. 30 days \u00b7 Dec 19"
+  },
+  "2A": {
+   "kids-body-wash": "Est. 14 days \u00b7 Dec 3",
+   "dishwasher-pods": "Est. 21 days \u00b7 Dec 10",
+   "whole-milk": "Est. 4 days \u00b7 Nov 23",
+   "hand-soap-refill": "Est. 30 days \u00b7 Dec 19"
+  },
+  "household_editable_in_pantry": false
+ },
+ "compare_after": {
+  "2A2K": {
+   "kids-body-wash": "Est. 14 days \u00b7 Dec 3",
+   "dishwasher-pods": "Est. 21 days \u00b7 Dec 10",
+   "whole-milk": "Est. 4 days \u00b7 Nov 23",
+   "hand-soap-refill": "Est. 30 days \u00b7 Dec 19"
+  },
+  "2A": {
+   "kids-body-wash": "May not apply: no kids in this household",
+   "dishwasher-pods": "Est. 32 days \u00b7 Dec 21",
+   "whole-milk": "Est. 10 days \u00b7 Nov 29",
+   "hand-soap-refill": "Est. 60 days \u00b7 Jan 18"
+  },
+  "household_editable_in_pantry": true
+ },
+ "typical1": {
+  "runouts_basis": "Based on 2 adults, 2 kids \u00b7 standard use",
+  "flags": {
+   "kids-body-wash": null,
+   "dishwasher-pods": null,
+   "whole-milk": null,
+   "hand-soap-refill": null
+  },
+  "review_shown": false,
+  "confirmed_count": "5",
+  "effect_note": "What this order changed: it was saved to this session's history. Because nothing is delivered, your run-out estimates stay the same and the pantry will show these items as ordered. In a full version, a delivered order would restart that item's estimate.",
+  "ordered_tag": "Ordered 2 this session (simulated) \u00b7 estimate unchanged",
+  "milk_after": "Est. 4 days \u00b7 Nov 23",
+  "history": "1 simulated"
+ },
+ "typical2": {
+  "start": {
+   "kids-body-wash": "Est. 14 days \u00b7 Dec 3",
+   "dishwasher-pods": "Est. 21 days \u00b7 Dec 10",
+   "whole-milk": "Est. 4 days \u00b7 Nov 23",
+   "hand-soap-refill": "Est. 30 days \u00b7 Dec 19"
+  },
+  "after_change": {
+   "kids-body-wash": "Est. 28 days \u00b7 Dec 17",
+   "dishwasher-pods": "Est. 32 days \u00b7 Dec 21",
+   "whole-milk": "Est. 8 days \u00b7 Nov 27",
+   "hand-soap-refill": "Est. 60 days \u00b7 Jan 18"
+  },
+  "notice": "Estimates updated for 1 Adult, 1 Kid.",
+  "chip": "1 Adult, 1 Kid",
+  "milk_more": "Est. 6 days \u00b7 Nov 25",
+  "basis_more": "Based on 1 adult, 1 kid \u00b7 more frequent use",
+  "review_shown": false,
+  "confirmed": "1"
+ },
+ "challenge": {
+  "error_before_counts": "Add at least one adult under Other household so estimates fit your home.",
+  "chip": "3 Adults, 3 Kids",
+  "runouts": {
+   "kids-body-wash": "Est. 9 days \u00b7 Nov 28",
+   "dishwasher-pods": "Est. 16 days \u00b7 Dec 5",
+   "whole-milk": "Est. 3 days \u00b7 Nov 22",
+   "hand-soap-refill": "Est. 20 days \u00b7 Dec 9"
+  },
+  "basis": "Based on 3 adults, 3 kids \u00b7 standard use"
+ },
+ "invalid": {
+  "empty_basket_error": "Add at least one item to your basket first.",
+  "history": "0 simulated",
+  "done_disabled_zero_adults": true,
+  "zero_adult_runouts": {
+   "kids-body-wash": "Est. 14 days \u00b7 Dec 3",
+   "dishwasher-pods": "Est. 21 days \u00b7 Dec 10",
+   "whole-milk": "Est. 4 days \u00b7 Nov 23",
+   "hand-soap-refill": "Est. 30 days \u00b7 Dec 19"
+  },
+  "zero_adult_order_error": "Add at least one adult to your household before ordering.",
+  "pdf_upload_error": "Choose a PNG, JPG, or WEBP image to continue.",
+  "still_on_start": true
+ },
+ "risk_before": {
+  "order_placed_immediately": true
+ },
+ "risk_after": {
+  "order_placed_immediately": false,
+  "review_items": [
+   "Kids Body Wash: No kids in this household, so this may not apply.",
+   "Dishwasher Pods: Est. 32 days left, so you may not need it yet.",
+   "Hand Soap Refill: Est. 60 days left, so you may not need it yet."
+  ],
+  "basket_after_remove": "1",
+  "basket_lines": [
+   "whole-milk"
+  ],
+  "order_after_remove": "1",
+  "order_anyway_count": "1"
+ },
+ "mobile_horizontal_overflow": false
+}

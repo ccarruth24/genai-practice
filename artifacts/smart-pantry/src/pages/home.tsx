@@ -1,17 +1,20 @@
 import { useRef, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowRight,
   Check,
   ChevronDown,
   ChevronUp,
   Clock3,
   Droplets,
+  Info,
   Milk,
   Minus,
   Package,
   Plus,
   ReceiptText,
   RotateCcw,
+  Pencil,
   ShieldCheck,
   ShoppingBag,
   Trash2,
@@ -23,20 +26,65 @@ type PantryItem = {
   id: string;
   name: string;
   baseDays: number;
-  daysToRunOut: number;
   frequency: Frequency;
 };
+type Household = { preset: string; adults: number; kids: number };
 type OrderLine = { id: string; name: string; quantity: number };
 type SimulatedOrder = { id: number; placedAt: Date; lines: OrderLine[] };
 
+// baseDays = demo estimate for the reference household (2 adults, 2 kids under 10).
 const initialItems: PantryItem[] = [
-  { id: 'kids-body-wash', name: 'Kids Body Wash', baseDays: 14, daysToRunOut: 14, frequency: 'standard' },
-  { id: 'dishwasher-pods', name: 'Dishwasher Pods', baseDays: 21, daysToRunOut: 21, frequency: 'standard' },
-  { id: 'whole-milk', name: 'Whole Milk', baseDays: 4, daysToRunOut: 4, frequency: 'standard' },
-  { id: 'hand-soap-refill', name: 'Hand Soap Refill', baseDays: 30, daysToRunOut: 30, frequency: 'standard' },
+  { id: 'kids-body-wash', name: 'Kids Body Wash', baseDays: 14, frequency: 'standard' },
+  { id: 'dishwasher-pods', name: 'Dishwasher Pods', baseDays: 21, frequency: 'standard' },
+  { id: 'whole-milk', name: 'Whole Milk', baseDays: 4, frequency: 'standard' },
+  { id: 'hand-soap-refill', name: 'Hand Soap Refill', baseDays: 30, frequency: 'standard' },
 ];
 
-const householdOptions = ['2 Adults, 2 Kids under 10', '1 Adult, 1 Kid', '2 Adults', 'Other household'];
+const OTHER = 'Other household';
+const householdPresets: Household[] = [
+  { preset: '2 Adults, 2 Kids under 10', adults: 2, kids: 2 },
+  { preset: '1 Adult, 1 Kid', adults: 1, kids: 1 },
+  { preset: '2 Adults', adults: 2, kids: 0 },
+  { preset: OTHER, adults: 0, kids: 0 },
+];
+const householdOptions = householdPresets.map((option) => option.preset);
+
+// Simple, visible rule (not AI): how much of each item a household uses per day,
+// relative to the reference household of 2 adults + 2 kids.
+const usageRule: Record<string, (adults: number, kids: number) => number> = {
+  'kids-body-wash': (_adults, kids) => kids,
+  'whole-milk': (adults, kids) => adults + 1.5 * kids,
+  'dishwasher-pods': (adults, kids) => 1 + 0.5 * (adults + kids),
+  'hand-soap-refill': (adults, kids) => adults + kids,
+};
+const frequencyFactor: Record<Frequency, number> = { less: 1.25, standard: 1, more: 0.75 };
+const MAX_DAYS = 90;
+const PLENTY_LEFT_DAYS = 30;
+
+/** Returns estimated days until an item runs out, or null when the item doesn't apply to this household. */
+function estimateDays(item: PantryItem, household: Household): number | null {
+  const rule = usageRule[item.id];
+  const usage = rule(household.adults, household.kids);
+  if (usage <= 0) return null;
+  const reference = rule(2, 2);
+  const days = item.baseDays * (reference / usage) * frequencyFactor[item.frequency];
+  return Math.min(MAX_DAYS, Math.max(1, Math.round(days)));
+}
+
+function plural(count: number, word: string) {
+  return `${count} ${word}${count === 1 ? '' : 's'}`;
+}
+
+function householdLabel(household: Household) {
+  if (household.preset !== OTHER) return household.preset;
+  return household.kids > 0 ? `${plural(household.adults, 'Adult')}, ${plural(household.kids, 'Kid')}` : plural(household.adults, 'Adult');
+}
+
+function householdBasis(household: Household) {
+  return `${plural(household.adults, 'adult')}, ${plural(household.kids, 'kid')}`;
+}
+
+const frequencyLabel: Record<Frequency, string> = { less: 'less frequent use', standard: 'standard use', more: 'more frequent use' };
 const frequencies: { value: Frequency; label: string }[] = [
   { value: 'less', label: 'Less Frequent' },
   { value: 'standard', label: 'Standard' },
@@ -68,6 +116,48 @@ function ItemIcon({ id }: { id: string }) {
     <span className={`item-symbol ${id === 'whole-milk' ? 'bg-[hsl(34_73%_88%)]' : id === 'dishwasher-pods' ? 'bg-[hsl(343_27%_89%)]' : 'bg-[hsl(38_77%_83%)]'}`} aria-hidden="true">
       {icon}
     </span>
+  );
+}
+
+function CountStepper({ label, value, min, max, onChange, testId }: { label: string; value: number; min: number; max: number; onChange: (value: number) => void; testId: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 text-[12px]">
+      <span className="font-semibold">{label}</span>
+      <div className="stepper" role="group" aria-label={`Number of ${label.toLowerCase()}`}>
+        <button type="button" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} aria-label={`Fewer ${label.toLowerCase()}`} data-testid={`button-${testId}-decrease`}><Minus size={16} aria-hidden="true" /></button>
+        <output aria-live="polite" data-testid={`text-${testId}`}>{value}</output>
+        <button type="button" onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} aria-label={`More ${label.toLowerCase()}`} data-testid={`button-${testId}-increase`}><Plus size={16} aria-hidden="true" /></button>
+      </div>
+    </div>
+  );
+}
+
+function HouseholdPicker({ household, onChange }: { household: Household; onChange: (household: Household) => void }) {
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Choose household size">
+        {householdOptions.map((option) => (
+          <button
+            key={option}
+            type="button"
+            data-testid={`button-household-${option.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+            aria-pressed={household.preset === option}
+            onClick={() => {
+              const preset = householdPresets.find((entry) => entry.preset === option)!;
+              onChange(option === OTHER && household.preset === OTHER ? household : { ...preset });
+            }}
+            className={`min-h-11 rounded-full border px-4 text-[12px] font-semibold transition-colors ${household.preset === option ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))]'}`}
+          >{option}</button>
+        ))}
+      </div>
+      {household.preset === OTHER && (
+        <div className="panel mt-3 max-w-[450px] px-4 py-2" data-testid="panel-other-household">
+          <p className="pt-2 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Who lives with you? Estimates use these counts.</p>
+          <CountStepper label="Adults" value={household.adults} min={0} max={8} testId="adults" onChange={(adults) => onChange({ ...household, adults })} />
+          <CountStepper label="Kids" value={household.kids} min={0} max={8} testId="kids" onChange={(kids) => onChange({ ...household, kids })} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -107,7 +197,14 @@ function OrderHistory({ orders }: { orders: SimulatedOrder[] }) {
 
 export default function Home() {
   const [active, setActive] = useState(false);
-  const [household, setHousehold] = useState(householdOptions[0]);
+  const [household, setHousehold] = useState<Household>({ ...householdPresets[0] });
+  // Estimates only use a complete household; while counts are incomplete, the last complete one stays applied.
+  const [appliedHousehold, setAppliedHousehold] = useState<Household>({ ...householdPresets[0] });
+  const [householdError, setHouseholdError] = useState('');
+  const [editingHousehold, setEditingHousehold] = useState(false);
+  const [householdNotice, setHouseholdNotice] = useState('');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [orderedThisSession, setOrderedThisSession] = useState<Record<string, number>>({});
   const [source, setSource] = useState('Demo receipt');
   const [imageSelected, setImageSelected] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -126,8 +223,42 @@ export default function Home() {
     quantity: basket[item.id],
   }));
   const totalUnits = basketLines.reduce((total, line) => total + line.quantity, 0);
+  const estimates: Record<string, number | null> = Object.fromEntries(items.map((item) => [item.id, estimateDays(item, appliedHousehold)]));
+  function flagFor(id: string): string | null {
+    const days = estimates[id];
+    if (days === null) return 'No kids in this household, so this may not apply.';
+    if (days > PLENTY_LEFT_DAYS) return `Est. ${days} days left, so you may not need it yet.`;
+    return null;
+  }
+  const flaggedLines = basketLines.filter((line) => flagFor(line.id));
+
+  function householdIsValid(next: Household) {
+    return next.adults >= 1;
+  }
+
+  function changeHousehold(next: Household) {
+    setHousehold(next);
+    setReviewOpen(false);
+    if (householdIsValid(next)) {
+      setAppliedHousehold(next);
+      setHouseholdError('');
+      if (active) setHouseholdNotice(`Estimates updated for ${householdLabel(next)}.`);
+    } else {
+      setHouseholdNotice('');
+    }
+  }
+
+  function requireHousehold() {
+    if (!householdIsValid(household)) {
+      setHouseholdError('Add at least one adult under Other household so estimates fit your home.');
+      return false;
+    }
+    setHouseholdError('');
+    return true;
+  }
 
   function beginWithDemo() {
+    if (!requireHousehold()) return;
     setSource('Demo receipt');
     setImageSelected(false);
     setActive(true);
@@ -140,6 +271,7 @@ export default function Home() {
       return;
     }
     setUploadError('');
+    if (!requireHousehold()) return;
     // The image is never read, parsed, or transmitted.
     setSource('demo sample data (uploaded file not read)');
     setImageSelected(true);
@@ -148,6 +280,7 @@ export default function Home() {
 
   function changeQuantity(id: string, quantity: number) {
     setBasketError('');
+    setReviewOpen(false);
     setBasket((current) => {
       const next = { ...current };
       if (quantity <= 0) delete next[id];
@@ -157,17 +290,40 @@ export default function Home() {
   }
 
   function updateFrequency(id: string, frequency: Frequency) {
-    const factor: Record<Frequency, number> = { less: 1.25, standard: 1, more: 0.75 };
-    setItems((current) => current.map((item) => item.id === id
-      ? { ...item, frequency, daysToRunOut: Math.max(1, Math.round(item.baseDays * factor[frequency])) }
-      : item));
+    setReviewOpen(false);
+    setItems((current) => current.map((item) => item.id === id ? { ...item, frequency } : item));
   }
 
-  function placeOrder() {
+  function removeFlagged() {
+    setBasket((current) => {
+      const next = { ...current };
+      flaggedLines.forEach((line) => delete next[line.id]);
+      return next;
+    });
+    setReviewOpen(false);
+  }
+
+  function placeOrder(confirmed = false) {
     if (basketLines.length === 0) {
       setBasketError('Add at least one item to your basket first.');
       return;
     }
+    if (!householdIsValid(household)) {
+      setBasketError('Add at least one adult to your household before ordering.');
+      setEditingHousehold(true);
+      return;
+    }
+    // Safeguard: pause and let the parent review items the estimate says they may not need yet.
+    if (!confirmed && flaggedLines.length > 0) {
+      setReviewOpen(true);
+      return;
+    }
+    setReviewOpen(false);
+    setOrderedThisSession((current) => {
+      const next = { ...current };
+      basketLines.forEach((line) => { next[line.id] = (next[line.id] ?? 0) + line.quantity; });
+      return next;
+    });
     const order: SimulatedOrder = { id: orders.length + 1, placedAt: new Date(), lines: basketLines };
     setOrders((current) => [order, ...current]);
     setLatestOrder(order);
@@ -196,18 +352,9 @@ export default function Home() {
             <p className="mt-2 text-[11px] text-[hsl(var(--muted-foreground))]">Demo only. Nothing is purchased.</p>
             <div className="mt-9">
               <p className="mb-3 text-[13px] font-bold">Your household</p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Choose household size">
-                {householdOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    data-testid={`button-household-${option.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                    aria-pressed={household === option}
-                    onClick={() => setHousehold(option)}
-                    className={`min-h-11 rounded-full border px-4 text-[12px] font-semibold transition-colors ${household === option ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--primary))]'}`}
-                  >{option}</button>
-                ))}
-              </div>
+              <HouseholdPicker household={household} onChange={changeHousehold} />
+              <p className="mt-2 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Your household sets the starting run-out estimates. You can change it later.</p>
+              {householdError && <p role="alert" className="mt-2 text-[12px] text-[hsl(var(--destructive))]" data-testid="text-household-error">{householdError}</p>}
             </div>
             <div className="my-6 flex items-center gap-3 max-w-[450px]"><span className="h-px flex-1 bg-[hsl(var(--border))]" /><span className="eyebrow">or use a screenshot</span><span className="h-px flex-1 bg-[hsl(var(--border))]" /></div>
             <input
@@ -249,6 +396,10 @@ export default function Home() {
           <p className="eyebrow mt-8">Simulated order {String(latestOrder.id).padStart(2, '0')} · Complete</p>
           <h1 className="display-title mt-4">That’s taken care of.<br /><span className="italic">For the demo.</span></h1>
           <p className="muted-copy mt-5 max-w-[550px] text-[15px]">Your basket has been cleared and the order is saved for this session. Nothing was purchased, charged, or delivered.</p>
+          <div className="panel mt-6 flex max-w-[620px] items-start gap-3 p-4 text-[12px] leading-5" data-testid="text-order-effect">
+            <Info size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p><strong>What this order changed:</strong> it was saved to this session's history. Because nothing is delivered, your run-out estimates stay the same and the pantry will show these items as ordered. In a full version, a delivered order would restart that item's estimate.</p>
+          </div>
           <section className="panel mt-9 overflow-hidden" aria-labelledby="confirmation-heading" data-testid="card-order-confirmation">
             <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-5 sm:px-7"><ReceiptText size={20} aria-hidden="true" /><h2 id="confirmation-heading" className="text-[14px] font-bold">Order summary</h2></div>
             <div className="divide-y divide-[hsl(var(--border))] px-5 sm:px-7">
@@ -268,9 +419,19 @@ export default function Home() {
             <h1 className="display-title mt-4">What do you<br /><span className="italic">need more of?</span></h1>
             <p className="muted-copy mt-5 max-w-[550px] text-[14px]">Choose your everyday essentials, adjust the quantities, and place a simulated order. No real checkout happens here.</p>
             <div className="mt-7 flex flex-wrap items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
-              <span className="rounded-full bg-[hsl(var(--muted))] px-3 py-2 font-semibold text-[hsl(var(--foreground))]" data-testid="text-household">{household}</span>
+              <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[hsl(var(--muted))] px-3 py-2 font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/.6)]" aria-expanded={editingHousehold} aria-controls="household-editor" onClick={() => setEditingHousehold(!editingHousehold)} data-testid="button-change-household">
+                <span data-testid="text-household">{householdLabel(household)}</span><Pencil size={12} aria-hidden="true" /><span className="underline underline-offset-2">Change</span>
+              </button>
               <span className="rounded-full border border-[hsl(var(--border))] px-3 py-2">Source: {source}</span>
             </div>
+            {editingHousehold && (
+              <div id="household-editor" className="mt-4" data-testid="panel-household-editor">
+                <HouseholdPicker household={household} onChange={changeHousehold} />
+                <button type="button" className="btn btn-light mt-3" onClick={() => setEditingHousehold(false)} disabled={!householdIsValid(household)} data-testid="button-household-done">Done</button>
+                {!householdIsValid(household) && <p role="alert" className="mt-2 text-[12px] text-[hsl(var(--destructive))]">Add at least one adult so estimates fit your home. Estimates still use {householdLabel(appliedHousehold)} until you do.</p>}
+              </div>
+            )}
+            <p aria-live="polite" className="mt-2 text-[12px] font-semibold text-[hsl(var(--foreground))]" data-testid="text-household-notice">{householdNotice}</p>
             {imageSelected && <p className="mt-3 text-[13px] leading-5 text-[hsl(var(--muted-foreground))]" data-testid="text-upload-demo-notice">This demo doesn't read uploaded images. These are sample items, not what's in your image.</p>}
             <div className="mt-10 flex items-end justify-between gap-3">
               <div><p className="eyebrow">The essentials</p><h2 className="section-title mt-2">Your four staples</h2></div>
@@ -279,16 +440,24 @@ export default function Home() {
             <div className="panel mt-5 overflow-hidden">
               {items.map((item) => {
                 const quantity = basket[item.id] ?? 0;
+                const days = estimates[item.id];
+                const ordered = orderedThisSession[item.id];
                 return (
                   <div key={item.id} className="item-row" data-testid={`active-item-${item.id}`}>
                     <ItemIcon id={item.id} />
                     <div className="min-w-0 flex-1">
                       <h3 className="text-[14px] font-bold leading-5">{item.name}</h3>
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))]" data-testid={`text-runout-${item.id}`}><Clock3 size={12} aria-hidden="true" /> Est. {item.daysToRunOut} days · {dateIn(item.daysToRunOut)}</p>
+                      {days === null ? (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-[hsl(var(--foreground))]" data-testid={`text-runout-${item.id}`}><AlertTriangle size={12} aria-hidden="true" /> May not apply: no kids in this household</p>
+                      ) : (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))]" data-testid={`text-runout-${item.id}`}><Clock3 size={12} aria-hidden="true" /> Est. {days} days · {dateIn(days)}</p>
+                      )}
+                      <p className="mt-0.5 text-[10px] leading-4 text-[hsl(var(--muted-foreground))]" data-testid={`text-basis-${item.id}`}>Based on {householdBasis(appliedHousehold)} · {frequencyLabel[item.frequency]}</p>
+                      {ordered && <p className="mt-1 inline-block rounded-full bg-[hsl(var(--accent)/.55)] px-2 py-0.5 text-[10px] font-semibold" data-testid={`text-ordered-${item.id}`}>Ordered {ordered} this session (simulated) · estimate unchanged</p>}
                     </div>
                     <div className="item-action shrink-0">
                       {quantity === 0 ? (
-                        <button type="button" className="btn btn-light" onClick={() => changeQuantity(item.id, 1)} data-testid={`button-add-${item.id}`} aria-label={`Add ${item.name} to basket`}><Plus size={16} aria-hidden="true" /> Add</button>
+                        <button type="button" className="btn btn-light" onClick={() => changeQuantity(item.id, 1)} data-testid={`button-add-${item.id}`} aria-label={`Add ${item.name} to basket`}><Plus size={16} aria-hidden="true" /> {days === null ? 'Add anyway' : 'Add'}</button>
                       ) : (
                         <div className="stepper" role="group" aria-label={`Quantity for ${item.name}`}>
                           <button type="button" onClick={() => changeQuantity(item.id, quantity - 1)} aria-label={`Decrease ${item.name} quantity${quantity === 1 ? ' and remove from basket' : ''}`} data-testid={`button-decrease-${item.id}`}><Minus size={16} aria-hidden="true" /></button>
@@ -301,7 +470,7 @@ export default function Home() {
                 );
               })}
             </div>
-            <p className="mt-3 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Dates are estimates from demo data, not a scanned receipt or live stock levels.</p>
+            <p className="mt-3 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Dates are demo estimates from a simple household rule (who lives with you and how often you use each item), not a scanned receipt, AI prediction, or live stock levels. Check them before you order.</p>
           </div>
 
           <aside className="basket-panel animate-rise-in stagger-1" ref={basketRef} aria-labelledby="basket-heading" data-testid="panel-basket">
@@ -318,13 +487,27 @@ export default function Home() {
             ) : (
               <div className="mt-5" aria-live="polite">
                 {basketLines.map((line) => <div key={line.id} className="basket-line" data-testid={`basket-item-${line.id}`}>
-                  <div className="min-w-0"><p className="text-[12px] font-semibold">{line.name}</p><p className="mt-1 font-mono text-[10px] text-[hsl(var(--sidebar-foreground)/.65)]">Quantity {line.quantity}</p></div>
+                  <div className="min-w-0"><p className="text-[12px] font-semibold">{line.name}</p><p className="mt-1 font-mono text-[10px] text-[hsl(var(--sidebar-foreground)/.65)]">Quantity {line.quantity}</p>{flagFor(line.id) && <p className="mt-1 flex items-start gap-1 text-[10px] leading-4 text-[hsl(var(--sidebar-primary))]" data-testid={`text-flag-${line.id}`}><AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden="true" />{flagFor(line.id)}</p>}</div>
                   <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[hsl(var(--sidebar-foreground)/.7)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]" onClick={() => changeQuantity(line.id, 0)} aria-label={`Remove ${line.name} from basket`} data-testid={`button-remove-${line.id}`}><Trash2 size={16} aria-hidden="true" /></button>
                 </div>)}
                 <div className="flex justify-between py-5 text-[12px]"><span className="text-[hsl(var(--sidebar-foreground)/.7)]">Total items</span><strong className="font-mono" data-testid="text-basket-count">{totalUnits}</strong></div>
               </div>
             )}
-            <button type="button" className="btn btn-accent mt-5 w-full" onClick={placeOrder} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
+            {reviewOpen && flaggedLines.length > 0 ? (
+              <div className="mt-5 rounded-2xl border border-[hsl(var(--sidebar-primary))] p-4" role="alertdialog" aria-labelledby="review-heading" data-testid="panel-review">
+                <p id="review-heading" className="flex items-center gap-2 text-[13px] font-bold"><AlertTriangle size={15} aria-hidden="true" />Check before you order</p>
+                <p className="mt-1 text-[11px] leading-5 text-[hsl(var(--sidebar-foreground)/.75)]">Based on your household, you may not need {flaggedLines.length === 1 ? 'this item' : 'these items'} yet:</p>
+                <ul className="mt-2 space-y-1 text-[11px] leading-5">
+                  {flaggedLines.map((line) => <li key={line.id} data-testid={`review-item-${line.id}`}><strong>{line.name}:</strong> {flagFor(line.id)}</li>)}
+                </ul>
+                <div className="mt-4 grid gap-2">
+                  <button type="button" className="btn btn-accent w-full" onClick={removeFlagged} data-testid="button-remove-flagged">Remove {flaggedLines.length === 1 ? 'it' : 'them'} from basket</button>
+                  <button type="button" className="btn btn-light w-full" onClick={() => placeOrder(true)} data-testid="button-order-anyway">I still need {flaggedLines.length === 1 ? 'it' : 'them'}, order anyway</button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" className="btn btn-accent mt-5 w-full" onClick={() => placeOrder()} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
+            )}
             {basketError && <p role="alert" className="mt-3 text-[11px] text-[hsl(var(--sidebar-primary))]" data-testid="text-basket-error">{basketError}</p>}
             <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]"><ShieldCheck size={14} className="mt-0.5 shrink-0" aria-hidden="true" />No payment, purchase, or delivery. This is a session-only prototype.</p>
           </aside>
@@ -336,7 +519,7 @@ export default function Home() {
               </button>
               {cadenceOpen && <div id="cadence-content" className="divide-y divide-[hsl(var(--border))] border-t border-[hsl(var(--border))] px-5 sm:px-6">
                 {items.map((item) => <div key={item.id} className="py-4">
-                  <div className="flex items-center justify-between gap-2 text-[12px]"><strong>{item.name}</strong><span className="font-mono text-[10px] text-[hsl(var(--muted-foreground))]">{item.daysToRunOut} days</span></div>
+                  <div className="flex items-center justify-between gap-2 text-[12px]"><strong>{item.name}</strong><span className="font-mono text-[10px] text-[hsl(var(--muted-foreground))]">{estimates[item.id] === null ? 'May not apply' : `${estimates[item.id]} days`}</span></div>
                   <div className="cadence-options" role="group" aria-label={`Usage frequency for ${item.name}`}>
                     {frequencies.map((option) => <button key={option.value} type="button" aria-pressed={item.frequency === option.value} onClick={() => updateFrequency(item.id, option.value)} data-testid={`button-frequency-${item.id}-${option.value}`}>{option.label}</button>)}
                   </div>
