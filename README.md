@@ -10,7 +10,7 @@ SmartPantry turns a household receipt into a quick, calm reorder flow, so parent
 |---|---|
 | **Running prototype** | https://smart-pantry-replenishment.replit.app |
 | **Replit project** | https://replit.com/@ccarruth/SmartPantry-Replenishment |
-| **Demo Video** (Google Drive) | [See Demo Video below](#demo-video) |
+| **Demo Video** (Google Drive) | [https://drive.google.com/file/d/1F6N5UUr2tdiJNTOBAeIBgMcgOnXGVQ-E/view?usp=sharing](https://drive.google.com/file/d/1F6N5UUr2tdiJNTOBAeIBgMcgOnXGVQ-E/view?usp=sharing) |
 | **Revision documentation** (priority improvements, peer feedback response, five test cases, before/after, interpretation, risk response, limitations, priorities) | [revision.md](revision.md) |
 | **Draft AI-use disclosure** | [ai-use-disclosure.md](ai-use-disclosure.md) |
 | **Test evidence** (screenshots and raw results) | [docs/evidence/](docs/evidence/) · [test-results.json](docs/evidence/test-results.json) · [test script](docs/tests/run_tests.py) |
@@ -19,7 +19,9 @@ SmartPantry turns a household receipt into a quick, calm reorder flow, so parent
 
 ## Demo Video
 
-**Draft demo (Google Drive):** _link coming soon_. The video will be shared with viewing access for Emelia Hughes (ehughes8@nd.edu) and Samuel Huang (ghuang3@nd.edu), and the same file will be uploaded to Canvas.
+**Draft demo (Google Drive):** [https://drive.google.com/file/d/1F6N5UUr2tdiJNTOBAeIBgMcgOnXGVQ-E/view?usp=sharing](https://drive.google.com/file/d/1F6N5UUr2tdiJNTOBAeIBgMcgOnXGVQ-E/view?usp=sharing)
+
+Viewing access is shared with Emelia Hughes (ehughes8@nd.edu) and Samuel Huang (ghuang3@nd.edu). The same file is uploaded to Canvas.
 
 ## Try it
 
