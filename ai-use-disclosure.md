@@ -7,7 +7,7 @@ Milestone: Project Prototype Revision, November 19, 2026. This builds on the AI-
 | Tool | Where it was used |
 |---|---|
 | **Replit Agent** (inside Replit) | Generated the original SmartPantry app and workspace (React + Vite frontend, the Express health-check server, and project scaffolding) from my product description, and published it to `smart-pantry-replenishment.replit.app`. |
-| **Claude (Anthropic), through Claude in Chrome** | For this revision: read the assignment, rubric, and the three reviews from Canvas. Proposed which feedback to act on. Wrote the code changes in `artifacts/smart-pantry/src/pages/home.tsx`. Wrote and ran the browser test script. Drafted `revision.md`, this disclosure, the README updates, and the demo script. Also used earlier in the term to help draft my peer reviews of classmates' projects. |
+| **Claude (Anthropic), through Claude in Chrome** | For this revision: read the assignment, rubric, and the three reviews from Canvas. Proposed which feedback to act on. Wrote the code changes in `artifacts/smart-pantry/src/pages/home.tsx`. Wrote and ran the browser test script. Drafted `revision.md`, this disclosure, and the README updates. Also used earlier in the term to help draft my peer reviews of classmates' projects. |
 
 No AI tool had access to real user data. All data in the app and tests is synthetic. No API keys are in the repository.
 
