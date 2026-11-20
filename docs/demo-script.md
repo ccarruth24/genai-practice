@@ -1,6 +1,6 @@
 # Demo video script (draft)
 
-> Draft narration outline written with AI assistance (see `ai-use-disclosure.md`). The recorded video on Google Drive is the final version and may differ in wording and click order.
+> Unused draft written with AI assistance (see `ai-use-disclosure.md`). The recorded demo on Google Drive was narrated unscripted and does not follow this outline.
 
 **Before recording:** open https://smart-pantry-replenishment.replit.app in a fresh tab (reload so it's on the start screen), close other windows, and silence notifications. Speak while you click.
 
