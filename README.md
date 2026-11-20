@@ -41,6 +41,8 @@ Based on three reviews (two peers and the instructor) and my own tests:
 3. **The confirmation explains what a simulated order changes.** Ordered items are tagged "estimate unchanged".
 4. **Risk safeguard: "Check before you order"** pauses an order that includes items the household likely doesn't need yet, and leaves the final choice to the parent.
 
+5. **Visual refresh:** a plain black-and-white design with one sans-serif font, replacing the original generated look. Features and flow are unchanged.
+
 Full details, the feedback table, tests and before-and-after are in [revision.md](revision.md).
 
 ## AI: functional, simulated, planned

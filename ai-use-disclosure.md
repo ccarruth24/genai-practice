@@ -16,6 +16,7 @@ No AI tool had access to real user data. All data in the app and tests is synthe
 - **Code:** Replit Agent built the first working slice. For the revision, Claude implemented the household-based estimate rule, the in-pantry household editor, the "Other household" count inputs, the post-order explanation, and the "Check before you order" safeguard.
 - **Debugging:** an automated test run found that, with "Other household" set to 0 adults, every item read "May not apply: no kids in this household". The fix keeps the last complete household until valid counts are entered, and the test was re-run to confirm it.
 - **Testing:** Claude wrote `docs/tests/run_tests.py` (Playwright). It runs the five cases against both the original and revised builds and saves screenshots and the on-screen text it found.
+- **Visual design:** I asked Claude to restyle the app because the original design looked obviously AI-generated. I chose the direction (a plain, black-and-white, Uber-like style), and Claude rewrote the stylesheet and simplified headings and labels. I reviewed screenshots before publishing.
 - **Writing:** Claude drafted the revision documentation and this disclosure from the reviews, the test output, and the prior README. I reviewed and edited them before submitting.
 
 ## Representative prompts
@@ -30,6 +31,7 @@ No AI tool had access to real user data. All data in the app and tests is synthe
 - **Deferred instead of building:** connecting a live vision model this week. Reviewers' problems were with the prediction experience (household ignored, confusing post-order dates), not with receipt reading, so I kept receipt reading as a clearly labeled simulation and fixed what reviewers actually hit.
 - **Adapted, not copied:** a reviewer suggested only a note that orders don't update estimates. I kept the note, added a per-item "estimate unchanged" tag where the confusing number appears, and decided *not* to make orders restart estimates, because nothing is delivered.
 - **Kept the default path short:** the safeguard only appears when a flagged item is in the basket, so the four-tap path reviewers praised is unchanged for a typical order.
+- **Changed the AI's design:** I rejected the original generated visual style (serif headline, tiny capital labels, cream-and-plum palette) and directed a simpler high-contrast look.
 - **Corrected:** the misleading "no kids" label for a 0-adult household (see Debugging). I didn't accept the first version of the estimate logic as-is.
 
 ## Verification

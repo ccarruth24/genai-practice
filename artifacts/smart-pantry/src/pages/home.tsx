@@ -113,7 +113,7 @@ function ItemIcon({ id }: { id: string }) {
       ? <Package size={23} strokeWidth={1.7} />
       : <Droplets size={23} strokeWidth={1.7} />;
   return (
-    <span className={`item-symbol ${id === 'whole-milk' ? 'bg-[hsl(34_73%_88%)]' : id === 'dishwasher-pods' ? 'bg-[hsl(343_27%_89%)]' : 'bg-[hsl(38_77%_83%)]'}`} aria-hidden="true">
+    <span className="item-symbol" aria-hidden="true">
       {icon}
     </span>
   );
@@ -166,8 +166,7 @@ function OrderHistory({ orders }: { orders: SimulatedOrder[] }) {
     <section className="mt-10" aria-labelledby="history-heading">
       <div className="mb-4 flex items-end justify-between gap-3">
         <div>
-          <p className="eyebrow">This session only</p>
-          <h3 id="history-heading" className="section-title mt-2">Order history</h3>
+          <h3 id="history-heading" className="section-title">Order history</h3>
         </div>
         <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]" data-testid="text-order-count">{orders.length} simulated</span>
       </div>
@@ -333,18 +332,17 @@ export default function Home() {
   }
 
   return (
-    <div className="app-shell pantry-noise">
+    <div className="app-shell">
       <header className="site-header">
         <Brand />
-        <span className="header-tag">A calmer way to reorder · Demo only</span>
-        {active && <span className="rounded-full border border-[hsl(var(--border))] px-3 py-2 font-mono text-[10px] uppercase tracking-[.1em] text-[hsl(var(--muted-foreground))] md:hidden">Demo pantry</span>}
+        <span className="header-tag">Demo · No real orders</span>
+        {active && <span className="rounded-full border border-white/40 px-3 py-1.5 text-[12px] font-semibold text-white md:hidden">Demo</span>}
       </header>
 
       {!active ? (
         <main className="page-wrap intro-grid">
           <div className="animate-rise-in">
-            <p className="eyebrow">The everyday essentials, sorted</p>
-            <h1 className="display-title mt-5 max-w-[600px]">More of what<br />you need.</h1>
+            <h1 className="display-title max-w-[560px]">Restock your household essentials</h1>
             <p className="muted-copy mt-6 max-w-[450px] text-[16px]">Start with four everyday staples. Add what you need and try an in-app reorder in a few taps. No account or checkout.</p>
             <button type="button" className="btn btn-primary mt-8 w-full sm:w-auto" onClick={beginWithDemo} data-testid="button-use-demo-receipt">
               Use Demo Receipt Data <ArrowRight size={17} aria-hidden="true" />
@@ -356,7 +354,7 @@ export default function Home() {
               <p className="mt-2 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">Your household sets the starting run-out estimates. You can change it later.</p>
               {householdError && <p role="alert" className="mt-2 text-[12px] text-[hsl(var(--destructive))]" data-testid="text-household-error">{householdError}</p>}
             </div>
-            <div className="my-6 flex items-center gap-3 max-w-[450px]"><span className="h-px flex-1 bg-[hsl(var(--border))]" /><span className="eyebrow">or use a screenshot</span><span className="h-px flex-1 bg-[hsl(var(--border))]" /></div>
+            <div className="my-6 flex items-center gap-3 max-w-[450px]"><span className="h-px flex-1 bg-[hsl(var(--border))]" /><span className="text-[13px] text-[hsl(var(--muted-foreground))]">or use a screenshot</span><span className="h-px flex-1 bg-[hsl(var(--border))]" /></div>
             <input
               ref={uploadRef}
               type="file"
@@ -367,7 +365,7 @@ export default function Home() {
               onChange={(event) => chooseImage(event.target.files?.[0])}
             />
             <button type="button" className="upload-target max-w-[450px]" onClick={() => uploadRef.current?.click()} data-testid="button-upload-receipt">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[hsl(var(--accent)/.55)]"><Upload size={21} aria-hidden="true" /></span>
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white"><Upload size={21} aria-hidden="true" /></span>
               <span><strong className="block text-[13px]">Choose a screenshot</strong><span className="mt-1 block text-[11px] leading-4 text-[hsl(var(--muted-foreground))]">PNG, JPG or WEBP · Moves straight to the demo pantry</span></span>
             </button>
             {uploadError && <p role="alert" className="mt-2 text-[12px] text-[hsl(var(--destructive))]" data-testid="text-upload-error">{uploadError}</p>}
@@ -375,26 +373,23 @@ export default function Home() {
           </div>
           <div className="intro-art animate-rise-in stagger-1" aria-hidden="true">
             <div className="art-sheet">
-              <div className="flex items-start justify-between"><span className="font-serif text-[24px] font-semibold tracking-[-.05em]">Household list</span><ReceiptText size={22} strokeWidth={1.5} /></div>
-              <p className="mt-1 font-mono text-[9px] uppercase tracking-[.18em] text-[hsl(var(--muted-foreground))]">The things that run out</p>
+              <div className="flex items-center justify-between"><span className="text-[18px] font-bold">Your staples</span><ReceiptText size={20} strokeWidth={1.75} /></div>
+              <p className="mt-1 text-[13px] text-[hsl(var(--muted-foreground))]">From the demo receipt</p>
               <div className="art-line" />
-              {initialItems.map((item, index) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 py-2.5 text-[13px]">
-                  <span><span className="mr-3 font-mono text-[10px] text-[hsl(var(--muted-foreground))]">0{index + 1}</span>{item.name}</span>
-                  <span className="h-4 w-4 rounded-full border border-[hsl(var(--border))]" />
+              {initialItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 py-3 text-[15px]">
+                  <span className="font-medium">{item.name}</span>
+                  <span className="text-[13px] text-[hsl(var(--muted-foreground))]">Reorder</span>
                 </div>
               ))}
-              <div className="art-line" />
-              <p className="font-serif text-[20px] italic text-[hsl(var(--muted-foreground))]">Ready when you are.</p>
             </div>
-            <span className="absolute bottom-5 right-6 font-mono text-[9px] uppercase tracking-[.17em] text-[hsl(var(--sidebar-foreground)/.6)]">01 / pantry</span>
           </div>
         </main>
       ) : latestOrder ? (
         <main className="page-wrap max-w-[800px] py-12 pb-24 sm:py-20 animate-rise-in">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[hsl(var(--accent))]"><Check size={27} aria-hidden="true" /></div>
-          <p className="eyebrow mt-8">Simulated order {String(latestOrder.id).padStart(2, '0')} · Complete</p>
-          <h1 className="display-title mt-4">That’s taken care of.<br /><span className="italic">For the demo.</span></h1>
+          <div className="grid h-14 w-14 place-items-center rounded-full bg-black text-white"><Check size={27} aria-hidden="true" /></div>
+          <p className="eyebrow mt-6">Simulated order #{latestOrder.id}</p>
+          <h1 className="display-title mt-2">Order placed</h1>
           <p className="muted-copy mt-5 max-w-[550px] text-[15px]">Your basket has been cleared and the order is saved for this session. Nothing was purchased, charged, or delivered.</p>
           <div className="panel mt-6 flex max-w-[620px] items-start gap-3 p-4 text-[12px] leading-5" data-testid="text-order-effect">
             <Info size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -415,8 +410,7 @@ export default function Home() {
       ) : (
         <main className="page-wrap pantry-layout">
           <div className="min-w-0 animate-rise-in">
-            <p className="eyebrow">Your active demo pantry</p>
-            <h1 className="display-title mt-4">What do you<br /><span className="italic">need more of?</span></h1>
+            <h1 className="display-title">What do you need?</h1>
             <p className="muted-copy mt-5 max-w-[550px] text-[14px]">Choose your everyday essentials, adjust the quantities, and place a simulated order. No real checkout happens here.</p>
             <div className="mt-7 flex flex-wrap items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
               <button type="button" className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[hsl(var(--muted))] px-3 py-2 font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/.6)]" aria-expanded={editingHousehold} aria-controls="household-editor" onClick={() => setEditingHousehold(!editingHousehold)} data-testid="button-change-household">
@@ -434,8 +428,8 @@ export default function Home() {
             <p aria-live="polite" className="mt-2 text-[12px] font-semibold text-[hsl(var(--foreground))]" data-testid="text-household-notice">{householdNotice}</p>
             {imageSelected && <p className="mt-3 text-[13px] leading-5 text-[hsl(var(--muted-foreground))]" data-testid="text-upload-demo-notice">This demo doesn't read uploaded images. These are sample items, not what's in your image.</p>}
             <div className="mt-10 flex items-end justify-between gap-3">
-              <div><p className="eyebrow">The essentials</p><h2 className="section-title mt-2">Your four staples</h2></div>
-              <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]">04 items</span>
+              <div><h2 className="section-title">Your staples</h2></div>
+              <span className="font-mono text-[11px] text-[hsl(var(--muted-foreground))]">4 items</span>
             </div>
             <div className="panel mt-5 overflow-hidden">
               {items.map((item) => {
@@ -475,12 +469,12 @@ export default function Home() {
 
           <aside className="basket-panel animate-rise-in stagger-1" ref={basketRef} aria-labelledby="basket-heading" data-testid="panel-basket">
             <div className="flex items-start justify-between gap-3">
-              <div><p className="font-mono text-[10px] uppercase tracking-[.16em] text-[hsl(var(--sidebar-primary))]">Ready when you are</p><h2 id="basket-heading" className="mt-2 font-serif text-[30px] tracking-[-.05em]">Your basket</h2></div>
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-[hsl(var(--sidebar-accent))]"><ShoppingBag size={20} aria-hidden="true" /></span>
+              <div><h2 id="basket-heading" className="text-[24px] font-bold tracking-[-.015em]">Your basket</h2></div>
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-white"><ShoppingBag size={20} aria-hidden="true" /></span>
             </div>
             {basketLines.length === 0 ? (
               <div className="mt-7 rounded-2xl border border-dashed border-[hsl(var(--sidebar-border))] px-5 py-8 text-center" data-testid="status-empty-basket">
-                <ShoppingBag size={24} className="mx-auto text-[hsl(var(--sidebar-primary))]" aria-hidden="true" />
+                <ShoppingBag size={24} className="mx-auto" aria-hidden="true" />
                 <p className="mt-3 text-[13px] font-semibold">Nothing in your basket yet.</p>
                 <p className="mt-1 text-[11px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]">Tap Add beside anything you’d like to reorder.</p>
               </div>
@@ -494,7 +488,7 @@ export default function Home() {
               </div>
             )}
             {reviewOpen && flaggedLines.length > 0 ? (
-              <div className="mt-5 rounded-2xl border border-[hsl(var(--sidebar-primary))] p-4" role="alertdialog" aria-labelledby="review-heading" data-testid="panel-review">
+              <div className="mt-5 rounded-xl border border-[hsl(var(--sidebar-primary))] bg-white p-4" role="alertdialog" aria-labelledby="review-heading" data-testid="panel-review">
                 <p id="review-heading" className="flex items-center gap-2 text-[13px] font-bold"><AlertTriangle size={15} aria-hidden="true" />Check before you order</p>
                 <p className="mt-1 text-[11px] leading-5 text-[hsl(var(--sidebar-foreground)/.75)]">Based on your household, you may not need {flaggedLines.length === 1 ? 'this item' : 'these items'} yet:</p>
                 <ul className="mt-2 space-y-1 text-[11px] leading-5">
@@ -502,13 +496,13 @@ export default function Home() {
                 </ul>
                 <div className="mt-4 grid gap-2">
                   <button type="button" className="btn btn-accent w-full" onClick={removeFlagged} data-testid="button-remove-flagged">Remove {flaggedLines.length === 1 ? 'it' : 'them'} from basket</button>
-                  <button type="button" className="btn btn-light w-full" onClick={() => placeOrder(true)} data-testid="button-order-anyway">I still need {flaggedLines.length === 1 ? 'it' : 'them'}, order anyway</button>
+                  <button type="button" className="btn w-full border-[hsl(var(--border))] bg-white text-black hover:bg-[hsl(var(--muted))]" onClick={() => placeOrder(true)} data-testid="button-order-anyway">Order anyway</button>
                 </div>
               </div>
             ) : (
               <button type="button" className="btn btn-accent mt-5 w-full" onClick={() => placeOrder()} data-testid="button-place-order">Place simulated order <ArrowRight size={16} aria-hidden="true" /></button>
             )}
-            {basketError && <p role="alert" className="mt-3 text-[11px] text-[hsl(var(--sidebar-primary))]" data-testid="text-basket-error">{basketError}</p>}
+            {basketError && <p role="alert" className="mt-3 text-[13px] font-medium text-[hsl(var(--destructive))]" data-testid="text-basket-error">{basketError}</p>}
             <p className="mt-4 flex items-start gap-2 text-[10px] leading-5 text-[hsl(var(--sidebar-foreground)/.65)]"><ShieldCheck size={14} className="mt-0.5 shrink-0" aria-hidden="true" />No payment, purchase, or delivery. This is a session-only prototype.</p>
           </aside>
           <div className="col-span-full max-w-[805px]">
@@ -529,7 +523,7 @@ export default function Home() {
             <OrderHistory orders={orders} />
           </div>
           {totalUnits > 0 && <div className="mobile-basket-bar" aria-label="Basket shortcut">
-            <span className="text-[12px] font-semibold"><span className="block font-mono text-[10px] text-[hsl(var(--muted-foreground))]">YOUR BASKET</span>{totalUnits} {totalUnits === 1 ? 'item' : 'items'} ready</span>
+            <span className="text-[12px] font-semibold"><span className="block text-[12px] text-[hsl(var(--muted-foreground))]">Your basket</span>{totalUnits} {totalUnits === 1 ? 'item' : 'items'} ready</span>
             <button type="button" className="btn btn-primary" onClick={() => basketRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} data-testid="button-view-basket">View basket <ArrowRight size={16} aria-hidden="true" /></button>
           </div>}
         </main>
