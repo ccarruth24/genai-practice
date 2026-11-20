@@ -1,4 +1,6 @@
-# Demo video script (about 2.5 minutes)
+# Demo video script (draft)
+
+> Draft narration outline written with AI assistance (see `ai-use-disclosure.md`). The recorded video on Google Drive is the final version and may differ in wording and click order.
 
 **Before recording:** open https://smart-pantry-replenishment.replit.app in a fresh tab (reload so it's on the start screen), close other windows, and silence notifications. Speak while you click.
 
