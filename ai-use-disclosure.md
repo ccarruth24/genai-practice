@@ -17,7 +17,6 @@ No AI tool had access to real user data. All data in the app and tests is synthe
 - **Debugging:** an automated test run found that, with "Other household" set to 0 adults, every item read "May not apply: no kids in this household". The fix keeps the last complete household until valid counts are entered, and the test was re-run to confirm it.
 - **Testing:** Claude wrote `docs/tests/run_tests.py` (Playwright). It runs the five cases against both the original and revised builds and saves screenshots and the on-screen text it found.
 - **Visual design:** I asked Claude to restyle the app because the original design looked obviously AI-generated. I chose the direction (a plain, black-and-white, Uber-like style), and Claude rewrote the stylesheet and simplified headings and labels. I reviewed screenshots before publishing.
-- **Demo video:** Claude drafted a narration script and click-by-click steps, but I didn't use them. I recorded the demo myself and narrated it unscripted, in my own words.
 - **Writing:** Claude drafted the revision documentation and this disclosure from the reviews, the test output, and the prior README. I reviewed and edited them before submitting.
 
 ## Representative prompts

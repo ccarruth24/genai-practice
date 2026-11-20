@@ -15,7 +15,6 @@ SmartPantry turns a household receipt into a quick, calm reorder flow, so parent
 | **Draft AI-use disclosure** | [ai-use-disclosure.md](ai-use-disclosure.md) |
 | **Test evidence** (screenshots and raw results) | [docs/evidence/](docs/evidence/) · [test-results.json](docs/evidence/test-results.json) · [test script](docs/tests/run_tests.py) |
 | **Prototype code** | [artifacts/smart-pantry/src/pages/home.tsx](artifacts/smart-pantry/src/pages/home.tsx) (main app) · [artifacts/smart-pantry/](artifacts/smart-pantry/) |
-| Demo script | [docs/demo-script.md](docs/demo-script.md) |
 
 ## Demo Video
 
