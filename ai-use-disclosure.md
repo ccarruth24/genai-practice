@@ -21,13 +21,13 @@ No AI tool had access to real user data. All data in the app and tests is synthe
 
 ## Representative prompts
 
-1. **To Replit Agent (building the slice):** *"Keep SmartPantry sleek, exceptionally easy to use, and low-friction: make the demo path one tap, keep optional choices secondary, and prioritize touch-friendly mobile interactions."* **Result:** a one-tap "Use Demo Receipt Data" path and a collapsed, optional "Adjust usage estimates" panel. Both stayed in the revision.
-2. **To Replit Agent:** *"Do not add restock reminders or SMS setup; reordering more items should happen directly in the app."* **Result:** I removed the reminder/SMS direction, and the product stayed focused on in-app reordering.
+1. **To Replit Agent (after the first build):** *"make it sleek looking and UX/UI extremely friendly. it should be super easy to use with no friction"* **Result:** the agent reworked the flow so "Use Demo Receipt Data" goes straight to the four items in one tap, made screenshot upload optional, and turned alerts off by default so a phone number didn't block the demo. The one-tap path stayed in this revision.
+2. **To Replit Agent:** *"i also dont want restock reminders, i want them to be able to reorder more in the app"* **Result:** the first build (made from my pasted brief) included phone-number setup and a simulated SMS restock alert. This prompt removed that direction and replaced it with the in-app basket and simulated reorder that the product is built around now.
 3. **To Claude (this revision):** *"Using these 3 tabs, along with peer reviews and feedback my professor gave, do the project prototype revision."* **Result:** a plan with three priority fixes plus one safeguard, tied to specific reviewer comments, then the code, tests and documents in this repository. I checked the plan against the reviews and the rubric before accepting it.
 
 ## Human judgment
 
-- **Rejected:** the earlier reminder/SMS direction (prompt 2). Reminders and texts would pull the product toward the subscription-management feeling it's meant to replace, and reordering should happen where the parent already is: in the app.
+- **Reversed:** the SMS restock-alert feature from the first build (prompt 2). After seeing it working, I decided reminders and texts would make SmartPantry feel like another subscription to manage, so I had the agent replace them with reordering directly in the app.
 - **Deferred instead of building:** connecting a live vision model this week. Reviewers' problems were with the prediction experience (household ignored, confusing post-order dates), not with receipt reading, so I kept receipt reading as a clearly labeled simulation and fixed what reviewers actually hit.
 - **Adapted, not copied:** a reviewer suggested only a note that orders don't update estimates. I kept the note, added a per-item "estimate unchanged" tag where the confusing number appears, and decided *not* to make orders restart estimates, because nothing is delivered.
 - **Kept the default path short:** the safeguard only appears when a flagged item is in the basket, so the four-tap path reviewers praised is unchanged for a typical order.

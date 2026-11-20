@@ -19,7 +19,7 @@ SmartPantry turns a household receipt into a quick, calm reorder flow, so parent
 
 ## Demo Video
 
-**Draft demo (Google Drive):** _link to be added after upload_. Viewing access is granted to Emelia Hughes (ehughes8@nd.edu) and Samuel Huang (ghuang3@nd.edu). The same file is uploaded to Canvas.
+**Draft demo (Google Drive):** _link coming soon_. The video will be shared with viewing access for Emelia Hughes (ehughes8@nd.edu) and Samuel Huang (ghuang3@nd.edu), and the same file will be uploaded to Canvas.
 
 ## Try it
 
